@@ -1,0 +1,123 @@
+= Scenario 6 - 10
+
+== pass:[<span style="color:blue;font-weight:600">Scenario 6</span>]: Location Quota Exceeded (FUP) → Accept Throttled Package
+
+=== Functions Involved
+* `authenticateUser`
+* `getLocation2`
+
+=== Logic Flow
+. Location found, user validated 
+. Check location quota usage
+. If `LOCVOLUMEQUOTACDR >= LOCVOLUMEQUOTA`
+. Apply FUP suffix "_H" to package
+. Return Access-Accept with throttled package
+
+=== FUP Logic
+
+[source,perl]
+----
+if($locUsedQta >= $locQta){
+    $fup="_H";
+}
+
+$p->{rp}->add_attr('Huawei-Account-Info','A'.$pkgid.$fup);
+$p->{rp}->add_attr('Huawei-Account-Info','N'.$pkgid.$fup);
+----
+
+== pass:[<span style="color:blue;font-weight:600">Scenario 7</span>]: Continuation (Normal Session) → Accept with Recalculated Quotas
+
+=== Functions Involved
+* `authenticateUser`
+* `getControlInfo`
+
+=== Logic Flow
+. Huawei-Service-Info present (starts with "N")
+. Extract previous quotas from request 
+. Calculate quota differences
+. Update user quotas
+. Check remaining quotas
+. Return Access-Accept with new quotas
+
+=== Database Queries
+
+==== Get previous session data
+
+[source,sql]
+----
+SELECT * FROM L2RADONLINE 
+WHERE MAC='MAC_ADDRESS' AND LOCID='LOCID' AND ACCTSESSIONID='SESSION_ID'
+----
+
+====  Update session quotas
+
+[source,sql]
+----
+UPDATE L2RADONLINE 
+SET LASTQT='NEW_TIME_QUOTA',LASTQV='NEW_VOLUME_QUOTA',TIMESTAMP=unix_timestamp(now()) 
+WHERE USERNAME='MAC_ADDRESS' AND ACCTSESSIONID='SESSION_ID'
+----
+
+==== Update user quotas
+
+[source,sql]
+----
+UPDATE MACL2USERS 
+SET TimeQuota=if(TimeQuota-(QUOTA_DIFF)>0,TimeQuota-(QUOTA_DIFF),0),
+    VolumeQuota=if(VolumeQuota-(VOLUME_DIFF)>0,VolumeQuota-(VOLUME_DIFF),0) 
+WHERE MAC='MAC_ADDRESS' AND LOCID='LOCID'
+----
+
+== pass:[<span style="color:blue;font-weight:600">Scenario 8</span>]: Continuation in FUP → Accept (Capped Timeout)
+
+=== Functions Involved
+* `authenticateUser`
+* `getControlInfo`
+
+=== Logic Flow
+. Service info contains "_H" (FUP active)
+. Check reset window 
+. Calculate remaining time until reset
+. Cap timeout to restriction limit 
+. Set placeholder volume quota 
+. Return Access-Accept
+
+=== FUP Connection Logic
+
+[source,perl]
+----
+if($serviceInfo =~/_H/){
+    my $qt=$locdata[5]-$datediff;  # Time until reset
+    my $qv=1073741824;  # 1GB placeholder
+    
+    if($qt>$restriction[1]){
+        $qt=$restriction[1];  # Cap to restriction
+    }
+    
+    $p->{rp}->add_attr('Session-Timeout', $qt);
+    $p->{rp}->add_attr('Huawei-Remanent-Volume', int($qv / 1024));
+}
+----
+
+== pass:[<span style="color:blue;font-weight:600">Scenario 9</span>]: Continuation in FUP (Outside Reset Window) → Reject
+
+=== Functions Involved
+* `authenticateUser`
+* `getControlInfo`
+
+=== Logic Flow
+. Service info contains "_H" 
+. Check reset window
+. Beyond reset window
+. Return Access-Reject
+
+
+== pass:[<span style="color:blue;font-weight:600">Scenario 10</span>]: Volume Quota Exhausted → Reject
+
+=== Functions Involved
+* `authenticateUser`
+
+=== Logic Flow
+. Calculate remaining volume quota 
+. If VolumeQuota <= 0 3. Return Access-Reject
+

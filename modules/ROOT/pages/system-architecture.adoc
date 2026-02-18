@@ -1,0 +1,6 @@
+= System Architecture
+
+Overview of system architecture.
+= System Architecture
+
+This section covers the system architecture.

@@ -1,0 +1,21 @@
+= Database Monitoring Queries
+
+=== Active Sessions
+
+[source,sql]
+----
+SELECT COUNT(*) FROM L2RADONLINE;
+----
+
+=== Location usage
+----
+SELECT LOCID, LOCVOLUMEQUOTACDR, LOCVOLUMEQUOTA 
+FROM LOCTOPACKAGE;
+----
+
+=== User quota status
+----
+SELECT MAC, TimeQuota, VolumeQuota, LOCID 
+FROM MACL2USERS 
+WHERE Status = 1;
+----

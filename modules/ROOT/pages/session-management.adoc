@@ -1,0 +1,20 @@
+= Session Management
+
+* pass:[<span style="color:blue;font-weight:600">Session Timeout</span>] : 3600 seconds (1 hour)
+* pass:[<span style="color:blue;font-weight:600">Idle Timeout</span>] : 1800 seconds (30 minutes)
+* pass:[<span style="color:blue;font-weight:600">FUP Session Timeout</span>] : 3600 seconds (same as normal)
+* pass:[<span style="color:blue;font-weight:600">FUP Idle Timeout</span>] : 1800 seconds (same as normal)
+
+---
+
+pass:[<span style="color:blue;font-weight:600">Session Timeout</span>] : 3600 seconds (1 hour)  
+  Maximum duration a session can stay active before it must reauthenticate.
+
+pass:[<span style="color:blue;font-weight:600">Idle Timeout</span>] : 1800 seconds (30 minutes)  
+  Session will be disconnected if no traffic is detected for 30 minutes.
+
+pass:[<span style="color:blue;font-weight:600">FUP  Timeout</span>] : 3600 seconds  
+  Session duration limit remains the same even after Fair Usage Policy is triggered.
+
+pass:[<span style="color:blue;font-weight:600">FUP Idle Timeout</span>] : 1800 seconds  
+  Idle disconnection time remains unchanged under FUP conditions.

@@ -1,0 +1,162 @@
+= Scenario 1 - 5
+
+== pass:[<span style="color:blue;font-weight:600">Scenario 1</span>]: First Login (MAC Not Found) → Accept + Init Package
+
+=== Functions Involved
+* `authenticateUser`
+* `getLocation2`
+* `getTimespan`
+
+=== Logic Flow
+. Extract MAC from `User-Name`
+. Parse `NAS-Port-Id` to determine location
+. Validate time restrictions
+. Query `MACL2USERS` table → No record found
+. Create new user record with full quotas
+. Validate location quota (FUP check)
+. Return `Access-Accept` with package attributes
+
+=== Database Queries
+
+==== Location Lookup
+
+[source,sql]
+----
+SELECT LOCID,TIMEQUOTA,VOLUMEQUOTA,QTARSTINTERVAL,PKGID,PACKAGETYPE,TIMESPAN,
+       LOCVOLUMEQUOTA,LOCVOLUMEQUOTACDR 
+FROM LOCTOPACKAGE 
+WHERE REMOTEID = 'SSID_NAME'
+  AND CIRCUITID = 'CIRCUIT_ID'
+  AND STATUS = 1;
+----
+
+==== User Creation
+
+[source,sql]
+----
+INSERT INTO MACL2USERS
+(USERNAME,MAC,CreatedDate,TimeQuota,VolumeQuota,Status,LOCID,PKGID,LASTRSTTIME,LASTLOGINTIME)
+VALUES
+('MAC_ADDRESS','MAC_ADDRESS',NOW(),TIME_QUOTA,VOLUME_QUOTA,1,'LOCID','PKGID',NOW(),NOW());
+----
+
+=== Response Attributes
+
+[source]
+----
+Huawei-Account-Info: APackageName
+Huawei-Account-Info: NPackageName
+Class: LOCID:LocationID
+Session-Timeout: 3600
+Idle-Timeout: 1800
+----
+
+
+== pass:[<span style="color:blue;font-weight:600">Scenario 2</span>]: Initial Login Within Reset Window → Accept
+
+=== Functions Involved
+* `authenticateUser`
+* `getLocation2`
+* `getTimespan`
+
+=== Logic Flow
+. Location and time validation 
+. Query user record - found
+. Check reset window - within window
+. Update last login time only 
+. Use existing quotas
+. Apply FUP if quotas exhausted
+. Return Access-Accept
+
+=== Database Queries
+
+==== Check reset window
+
+[source,sql]
+----
+SELECT *,( unix_timestamp(now()) - unix_timestamp(LASTRSTTIME) )AS DATEDIFF 
+FROM MACL2USERS 
+WHERE MAC='MAC_ADDRESS' AND LOCID='LOCID'
+----
+
+==== Update login time
+
+[source,sql]
+----
+UPDATE MACL2USERS 
+SET LASTLOGINTIME=NOW() 
+WHERE MAC='MAC_ADDRESS' AND LOCID='LOCID'
+----
+
+
+== pass:[<span style="color:blue;font-weight:600">Scenario 3</span>]: Initial Login Beyond Reset Window → Accept (Quotas Reset)
+
+=== Functions Involved
+* `authenticateUser`
+* `getLocation2`
+* `getTimespan`
+
+=== Logic Flow
+. Location and time validation
+. Query user record - found
+. Check reset window - beyond window
+. Reset quotos to initial values
+. Update reset and login times
+. Return Access-Accept
+
+=== Database Queries
+
+==== Reset quotas
+
+[source,sql]
+----
+UPDATE MACL2USERS 
+SET LASTLOGINTIME=NOW(),LASTRSTTIME=NOW(),TimeQuota=TIME_QUOTA,VolumeQuota=VOLUME_QUOTA,PKGID='PKGID' 
+WHERE USERNAME='MAC_ADDRESS' AND LOCID='LOCID'
+----
+
+== pass:[<span style="color:blue;font-weight:600">Scenario 4</span>]: Location Not Found → Reject
+
+=== Functions Involved
+* `authenticateUser`
+* `getLocation2`
+
+=== Logic Flow
+. Parse `NAS-Port-Id`
+. Query `LOCTOPACKAGE` table
+. No matching record found
+. Return Access-Reject immediately
+
+=== Database Queries
+
+==== Location lookup (returns empty)
+
+[source,sql]
+----
+SELECT LOCID,TIMEQUOTA,VOLUMEQUOTA,QTARSTINTERVAL,PKGID,PACKAGETYPE,TIMESPAN,LOCVOLUMEQUOTA,LOCVOLUMEQUOTACDR 
+FROM LOCTOPACKAGE 
+WHERE REMOTEID = 'SSID_NAME' AND CIRCUITID = 'CIRCUIT_ID' AND STATUS=1
+----
+
+== pass:[<span style="color:blue;font-weight:600">Scenario 5</span>]: Access During Restricted Time → Reject
+
+=== Functions Involved
+* `authenticateUser`
+* `getLocation2`
+* `getTimespan`
+
+=== Logic Flow
+. Location found
+. Check current time against `TIMESPAN`
+. Current time outside allowed ranges 
+. Return Access-Reject
+
+=== Time Calculations
+
+[source,perl]
+----
+my $unixdaytime = 3600*$hour + $min*60 + $sec;
+# Check against TIMESPAN ranges like "28800-64800" (8 AM - 6 PM)
+----
+
+

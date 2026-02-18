@@ -1,0 +1,27 @@
+= Key Log Messages
+
+* "Location Not found"
+* "Time Restricted"
+* "Init Login Request"
+* "continue Session...."
+* "FUP applied"
+
+---
+
+* `"Location Not found"`  
+  Logged when no matching `LOCTOPACKAGE` record is found for the given location parameters.
+
+* `"Time Restricted"`  
+  Logged when the current time is outside the allowed `TIMESPAN`.
+
+* `"Init Login Request"`  
+  Indicates a first-time or initial authentication request.
+
+* `"continue Session...."`  
+  Indicates a session continuation or reauthentication process.
+
+* `"FUP applied"`  
+  Logged when Fair Usage Policy restrictions are activated.
+
+---
+

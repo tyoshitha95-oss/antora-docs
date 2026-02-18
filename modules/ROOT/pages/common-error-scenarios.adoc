@@ -1,0 +1,24 @@
+= Common Error Scenarios
+
+* pass:[<span style="color:blue;font-weight:600">Location Not Found</span>] :  No matching LOCTOPACKAGE record
+* pass:[<span style="color:blue;font-weight:600">Time Restricted</span>] : Current time outside TIMESPAN
+* pass:[<span style="color:blue;font-weight:600">Quota Exhausted</span>] : VolumeQuota or TimeQuota <= 0
+* pass:[<span style="color:blue;font-weight:600">Database Errors</span>] : SQL execution failures
+* pass:[<span style="color:blue;font-weight:600">Invalid Attributes</span>] : Missing required RADIUS attributes
+
+---
+
+pass:[<span style="color:blue;font-weight:600">Location Not Found</span>] : No matching LOCTOPACKAGE record
+ No matching record exists in `LOCTOPACKAGE` for the given `REMOTEID` and `CIRCUITID`.
+
+pass:[<span style="color:blue;font-weight:600">Time Restricted</span>] : Current time outside TIMESPAN  
+  Current system time does not fall within the configured `TIMESPAN` range.
+
+pass:[<span style="color:blue;font-weight:600">Quota Exhausted</span>] : VolumeQuota or TimeQuota <= 0
+  User `TimeQuota` or `VolumeQuota` has reached zero or below, preventing further access.
+
+pass:[<span style="color:blue;font-weight:600">Database Errors</span>] : SQL execution failures
+  SQL query execution failed due to connection issues, syntax errors, or invalid data.
+
+pass:[<span style="color:blue;font-weight:600">Invalid Attributes</span>] : Missing required RADIUS attributes 
+  Required RADIUS attributes (e.g., `User-Name`, `NAS-Port-Id`, `Acct-Status-Type`) are missing or malformed.

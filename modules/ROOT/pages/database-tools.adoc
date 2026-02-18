@@ -1,0 +1,112 @@
+= Database Tools
+
+* LOCTOPACKAGE
+* MACL2USERS
+* L2RADONLINE
+* MACL2CDR
+
+
+== LOCTOPACKAGE Table
+
+[source,sql]
+----
+CREATE TABLE LOCTOPACKAGE (
+    LOCID VARCHAR(50) NOT NULL,           -- Location identifier
+    REMOTEID VARCHAR(100) NOT NULL,       -- SSID (Huawei) or remote-id (Cisco)
+    CIRCUITID VARCHAR(100) NOT NULL,      -- Circuit ID from NAS-Port-Id
+    TIMEQUOTA BIGINT NOT NULL,            -- Time quota in seconds
+    VOLUMEQUOTA BIGINT NOT NULL,          -- Volume quota in bytes
+    QTARSTINTERVAL INTEGER NOT NULL,      -- Reset interval in seconds
+    PKGID VARCHAR(50) NOT NULL,           -- Package name/ID
+    PACKAGETYPE INTEGER NOT NULL,         -- 1=Daily reset, 0=Other
+    TIMESPAN VARCHAR(255),                -- Allowed time ranges
+    LOCVOLUMEQUOTA BIGINT NOT NULL,       -- Total location quota for FUP
+    LOCVOLUMEQUOTACDR BIGINT NOT NULL,    -- Used quota tracking
+    STATUS INTEGER NOT NULL               -- 1=Active, 0=Inactive
+);
+----
+
+pass:[<span style="color:blue;font-weight:600">Main Purpose</span>] 
+
+* Assign time quota
+* Assign volume quota
+* Define reset interval
+* Control location-level FUP
+
+
+
+== MACL2USERS Table
+
+[source,sql]
+----
+ CREATE TABLE MACL2USERS (
+    USERNAME VARCHAR(50) NOT NULL,        -- MAC address (dot format)
+    MAC VARCHAR(17) NOT NULL,             -- MAC address (colon format)
+    CreatedDate DATETIME NOT NULL,         -- User creation timestamp
+    TimeQuota BIGINT NOT NULL,             -- Remaining time quota
+    VolumeQuota BIGINT NOT NULL,           -- Remaining volume quota
+    Status INTEGER NOT NULL,               -- 1=Active, 0=Disabled
+    LOCID VARCHAR(50) NOT NULL,            -- Location ID
+    PKGID VARCHAR(50) NOT NULL,           -- Package ID
+    LASTRSTTIME DATETIME NOT NULL,         -- Last quota reset time
+    LASTLOGINTIME DATETIME NOT NULL        -- Last login time
+);
+----
+
+pass:[<span style="color:blue;font-weight:600">Main Purpose</span>] 
+
+* Store MAC address
+* Track login and reset time
+* Track remaining quota
+
+
+
+== L2RADONLINE Table
+
+[source,sql]
+----
+ CREATE TABLE L2RADONLINE (
+    USERNAME VARCHAR(50) NOT NULL,        -- MAC address
+    NASPORTID VARCHAR(100),               -- NAS-Port-Id value
+    NASIPADDRESS BINARY(4) NOT NULL,      -- NAS IP (INET_ATON)
+    ACCTSESSIONID VARCHAR(100) NOT NULL,  -- Session ID (NAS:Session)
+    TIMESTAMP INTEGER NOT NULL,           -- Last update timestamp
+    FRAMEDIPADDRESS BINARY(4),            -- Client IP (INET_ATON)
+    MAC VARCHAR(17) NOT NULL,              -- MAC address
+    LOCID VARCHAR(50) NOT NULL,            -- Location ID
+    LASTQT BIGINT NOT NULL,                -- Last time quota reported
+    LASTQV BIGINT NOT NULL,                -- Last volume quota reported
+    PACKAGE VARCHAR(100)                  -- Service package name
+);
+----
+
+pass:[<span style="color:blue;font-weight:600">Main Purpose</span>] 
+
+* Store MAC address
+* Track remaining quota
+* Track login and reset time
+
+
+== MACL2CDR Table
+
+[source,sql]
+----
+ CREATE TABLE MACL2CDR (
+    USERNAME VARCHAR(50) NOT NULL,        -- MAC address
+    SESSIONID VARCHAR(100) NOT NULL,      -- Session ID
+    FRAMEDIP BINARY(4),                   -- Client IP
+    SESSIONTIME BIGINT,                   -- Session duration
+    UPLOAD BIGINT NOT NULL,               -- Uploaded bytes
+    DOWNLOAD BIGINT NOT NULL,             -- Downloaded bytes
+    PACKAGE VARCHAR(100),                 -- Service package name
+    LOCID VARCHAR(50) NOT NULL,           -- Location ID
+    TIMESTAMP INTEGER NOT NULL             -- Record timestamp
+);
+----
+
+pass:[<span style="color:blue;font-weight:600">Main Purpose</span>] 
+
+* Track active sessions
+* Store session ID
+* Store client IP
+* Track latest quota values

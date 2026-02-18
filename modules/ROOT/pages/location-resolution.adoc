@@ -1,0 +1,48 @@
+= Location Resolution
+
+== Location Resolution: getLocation2
+
+=== Purpose
+Extract location information from the `NAS-Port-Id` attribute and map it to a package in the `LOCTOPACKAGE` table.
+
+=== Logic Overview
+* Retrieve `NAS-Port-Id`
+* Parse it using `:` delimiter
+* Detect WLAN index
+* Extract:
+  - SSID → `$remoteid`
+  - Circuit ID → `$circuitid`
+* Query `LOCTOPACKAGE` for matching active package
+
+=== Implementation
+
+[source,perl]
+----
+@nasportids = $p->get_attr('NAS-Port-Id');
+
+for $val (@nasportids) {
+    my @arr = split(/:/, $val);
+    
+    # Find WLAN index
+    my $wlan_index = -1;
+    for (my $i = 0; $i < scalar @arr; $i++) {
+        if ($arr[$i] =~ /WLAN$/) {
+            $wlan_index = $i;
+            last;
+        }
+    }
+    
+    if ($wlan_index != -1 && scalar @arr >= $wlan_index + 5) {
+        $remoteid = $arr[$wlan_index + 3];  # SSID
+        
+        my $loctemp = $arr[$wlan_index + 5];
+        my @loctemp1 = split('_', $loctemp);
+        $circuitid = $loctemp1[0];  # Circuit ID
+        
+        $l2sql = "select LOCID,TIMEQUOTA,VOLUMEQUOTA,QTARSTINTERVAL,PKGID,PACKAGETYPE,TIMESPAN," .
+                 "LOCVOLUMEQUOTA,LOCVOLUMEQUOTACDR " .
+                 "from LOCTOPACKAGE where REMOTEID = '$remoteid' and CIRCUITID = '$circuitid' and STATUS=1";
+    }
+}
+----
+

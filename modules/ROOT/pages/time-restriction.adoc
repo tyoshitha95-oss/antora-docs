@@ -1,0 +1,36 @@
+= Time Restrictions
+
+== Time Restriction: getTimespan
+
+=== Purpose
+Validate user access against configured time restrictions defined in the package.
+
+=== Logic Overview
+* Convert current time into seconds of the day
+* Split configured time ranges using `|`
+* For each time range:
+  - Extract start (`from`) and end (`to`)
+  - Check if current time falls within range
+* If valid:
+  - Allow access
+  - Return remaining allowed seconds
+
+=== Implementation
+
+[source,perl]
+----
+my $unixdaytime = 3600*$hour + $min*60 + $sec;
+
+my @span = split('\|', $timespan);
+
+foreach $a (@span) {
+    my @time = split('-', $a);
+    my $from = $time[0];
+    my $to = $time[1];
+
+    if ($unixdaytime >= $from && $unixdaytime < $to) {
+        $result[0] = 1;                       # Access allowed
+        $result[1] = $to - $unixdaytime;      # Remaining time
+        return @result;
+    }
+}

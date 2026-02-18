@@ -1,0 +1,61 @@
+= Accounting Handlers
+
+== Accounting Handlers
+
+=== handleAccountingStart
+
+==== Purpose
+Process `Accounting-Start` packets and create a live session record.
+
+==== Key Operation
+
+[source,perl]
+----
+my $sql="insert into L2RADONLINE (USERNAME,NASPORTID,NASIPADDRESS,ACCTSESSIONID,TIMESTAMP,FRAMEDIPADDRESS,".
+        "MAC,LOCID,LASTQT,LASTQV,PACKAGE) values ".
+        "('$mac','$nasport','$nasip','$sessionid',unix_timestamp(now()),inet_aton('$ip'),'$mac','$locid',".
+        "0,0,'$serviceInfo')";
+----
+
+
+=== handleAccountingAlive
+
+==== Purpose
+Process `Accounting-Alive` (interim update) packets to keep session active.
+
+==== Key Operation
+
+[source,perl]
+----
+my $sql2 = "update L2RADONLINE set TIMESTAMP=$event_timestamp where ACCTSESSIONID='$sessionid'";
+----
+
+
+
+=== handleAccountingStop
+
+==== Purpose
+Process `Accounting-Stop` packets, update quotas, store session history, and adjust location usage.
+
+==== Key Operation
+
+[source,perl]
+----
+# Update user quotas
+my $sql = "UPDATE MACL2USERS ".
+          "set TimeQuota=if(TimeQuota-($acct_session_time-$oldqt)>0,TimeQuota-($acct_session_time-$oldqt),0),".
+          "VolumeQuota=if(VolumeQuota-($totalbytes-$oldqv)>0,VolumeQuota-($totalbytes-$oldqv),0) ".
+          "where MAC='$mac' and LOCID='$locid'";
+
+# Insert CDR record
+$sql = "insert into MACL2CDR (USERNAME,SESSIONID,FRAMEDIP,SESSIONTIME,UPLOAD,DOWNLOAD,".
+       "PACKAGE,LOCID,TIMESTAMP) values ('$mac','$sessionid',inet_aton('$frame_ip'),$sessionTime,".
+       "$inputbytes,$outputbytes,'$service','$locid',unix_timestamp(now()) )";
+
+# Update location quota if not FUP
+if($service !~/_H/){
+    $sql = "UPDATE LOCTOPACKAGE set LOCVOLUMEQUOTA=if(LOCVOLUMEQUOTA-($inputbytes+$outputbytes)>0,".
+           "LOCVOLUMEQUOTA-($inputbytes+$outputbytes),0),".
+           "LOCVOLUMEQUOTACDR=LOCVOLUMEQUOTACDR+($inputbytes+$outputbytes) where LOCID='$locid'";
+}
+----

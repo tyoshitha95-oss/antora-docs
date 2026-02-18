@@ -1,0 +1,22 @@
+= Database Optimization
+
+* Primary keys on critical fields
+* Indexes on frequently queried columns
+* Prepared statements for security
+* Connection pooling via Radius::SqlDb
+
+---
+
+* Primary Keys on Critical Fields  
+  Ensure unique identification and faster lookups for core tables such as `MACL2USERS` and `LOCTOPACKAGE`.
+
+* Indexes on Frequently Queried Columns 
+  Improve query performance for fields like `MAC`, `LOCID`, `REMOTEID`, and `ACCTSESSIONID`.
+
+* Prepared Statements for Security 
+  Reduce SQL injection risks and improve execution efficiency for repeated queries.
+
+* Connection Pooling via `Radius::SqlDb`  
+  Reuse database connections to reduce overhead and improve overall response time.
+
+---

@@ -1,0 +1,22 @@
+= Access Control
+
+* Location-based restrictions
+* Time-based access control
+* Quota enforcement
+* FUP throttling
+
+---
+
+* Location-Based Restrictions  
+  Allow access only if the user matches a valid `REMOTEID` and `CIRCUITID` in `LOCTOPACKAGE`.
+
+* Time-Based Access Control 
+  Permit authentication only within configured `TIMESPAN` ranges.
+
+* Quota Enforcement  
+  Deny access when `TimeQuota` or `VolumeQuota` reaches zero.
+
+* FUP Throttling  
+  Automatically apply restricted package rules when location-level usage exceeds the defined quota.
+
+---

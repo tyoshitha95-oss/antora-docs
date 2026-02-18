@@ -1,0 +1,18 @@
+= Input Validation
+
+* MAC address normalization
+* SQL injection prevention via prepared statements
+* Attribute validation before processing
+
+---
+
+* MAC Address Normalization
+  Standardize MAC address format (e.g., colon or dot notation) before processing to avoid mismatches.
+
+* SQL Injection Prevention via Prepared Statements  
+  Use parameterized queries to prevent malicious SQL input from altering database operations.
+
+* Attribute Validation Before Processing
+  Verify required RADIUS attributes exist and are correctly formatted before executing authentication logic.
+
+---

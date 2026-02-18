@@ -1,0 +1,59 @@
+= Authentication Handler
+
+== Authentication Handler: authenticateUser
+
+=== Purpose
+Core authentication logic for `Access-Request` packets.
+
+=== Key Variables
+* `$mac` – MAC address from `User-Name`
+* `$serviceInfo` – `Huawei-Service-Info` attribute
+* `$sessionid` – `NAS-Identifier:Acct-Session-Id`
+* `@locdata` – Location data array
+* `@restriction` – Time restriction data
+
+=== Logic Flow
+
+==== Step 1: Location and Time Validation
+
+[source,perl]
+----
+@locdata = getLocation2($self,$p);
+@restriction = getTimespan($self,$p,$locdata[7]);
+
+if ($locdata[0] == 0) {
+    $self->log($main::LOG_DEBUG, "Location Not found");
+    return 0;
+}
+
+if ($restriction[0] == 0) {
+    $self->log($main::LOG_DEBUG, "Time Restricted");
+    return 0;
+}
+----
+
+==== Step 2: Initial Login Detection
+
+[source,perl]
+----
+if ($serviceInfo !~/^N/) {  # Init Login Request
+    # Process initial login
+} else {
+    # Process session continuation
+}
+----
+
+==== Step 3: User Existence Check and Quota Management
+
+[source,perl]
+----
+if ($locdata[6] == 1) {  # Daily reset
+    $sql = "SELECT *,( unix_timestamp(CURDATE()) - unix_timestamp(LASTRSTTIME) " .
+           " -  86400*(($rst div 86400)-1) ) AS DATEDIFF " .
+           "from MACL2USERS where MAC='$mac' and LOCID='$locid'";
+} else {
+    $sql = "SELECT *,( unix_timestamp(now()) - unix_timestamp(LASTRSTTIME) ) AS DATEDIFF " .
+           "from MACL2USERS where MAC='$mac' and LOCID='$locid'";
+}
+----
+

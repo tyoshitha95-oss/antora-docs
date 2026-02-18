@@ -1,0 +1,20 @@
+= Time Calculations
+
+* pass:[<span style="color:blue;font-weight:600">Daily Reset</span>] → `PACKAGETYPE = 1`
+* pass:[<span style="color:blue;font-weight:600">Reset Interval</span>] → `QTARSTINTERVAL` (seconds)
+* pass:[<span style="color:blue;font-weight:600">Time Quata</span>] → `TIMEQUOTA` (seconds)
+* pass:[<span style="color:blue;font-weight:600">Volume Quata</span>] → `VOLUMEQUOTA` (bytes)
+
+---
+
+pass:[<span style="color:blue;font-weight:600">Daily Reset</span>] → `PACKAGETYPE = 1`  
+  When set to 1, user quotas automatically reset every day based on the reset interval logic.
+
+pass:[<span style="color:blue;font-weight:600">Reset Interval</span>] → `QTARSTINTERVAL` (seconds)  
+  Defines how often the quota should be reset (e.g., 86400 seconds = 24 hours).
+
+pass:[<span style="color:blue;font-weight:600">Time Quata</span>] → `TIMEQUOTA` (seconds)  
+  Maximum allowed online time for a user within the reset period.
+
+pass:[<span style="color:blue;font-weight:600">Volume Quata</span>] → `VOLUMEQUOTA` (bytes)  
+  Maximum allowed data usage (upload + download) within the reset period.

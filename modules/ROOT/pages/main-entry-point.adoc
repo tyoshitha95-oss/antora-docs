@@ -1,0 +1,40 @@
+= Main Entry Point
+
+== Main Entry Point: handle_request
+
+=== Purpose
+Main dispatcher for RADIUS requests.
+
+=== Parameters
+* `$self` – Object instance
+* `$p` – RADIUS packet object
+* `$dummy` – Placeholder parameter
+* `$extra_checks` – Additional validation flags
+
+=== Logic Flow
+
+[source,perl]
+----
+if ($p->code eq 'Access-Request') {
+    if (authenticateUser($self,$p) <= 0) {
+        return ($main::REJECT);
+    }
+    $self->adjustReply($p);
+    return ($main::ACCEPT);
+}
+elsif ($p->get_attr('Acct-Status-Type') eq 'Start') {
+    my $accStart = handleAccountingStart($self,$p);
+    return ($accStart == 1) ? ($main::ACCEPT) : ($main::REJECT);
+}
+elsif ($p->get_attr('Acct-Status-Type') eq 'Stop') {
+    my $acctStop = handleAccountingStop($self,$p);
+    return ($acctStop == 1) ? ($main::ACCEPT) : ($main::REJECT);
+}
+elsif ($p->get_attr('Acct-Status-Type') eq 'Alive') {
+    my $acctStop = handleAccountingAlive($self,$p);
+    return ($main::ACCEPT);
+}
+else {
+    return ($main::REJECT);
+}
+----

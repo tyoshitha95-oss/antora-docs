@@ -1,0 +1,20 @@
+= FUP (Fair Usage Policy)
+
+* pass:[<span style="color:blue;font-weight:600">Trigger</span>] : `LOCVOLUMEQUOTACDR` >= `LOCVOLUMEQUOTA`
+* pass:[<span style="color:blue;font-weight:600">Package Suffix</span>] :  "_H"
+* pass:[<span style="color:blue;font-weight:600">Volume Placeholder</span>] : 1GB (1073741824 bytes)
+* pass:[<span style="color:blue;font-weight:600">Time Cap</span>] : Based on reset window and restrictions
+
+---
+
+pass:[<span style="color:blue;font-weight:600">Trigger </span>] : `LOCVOLUMEQUOTACDR` >= `LOCVOLUMEQUOTA`  
+FUP is activated when total consumed location data reaches or exceeds the allocated location quota.  
+
+pass:[<span style="color:blue;font-weight:600">Package Suffix</span>] :  "_H"
+When FUP is triggered, the system switches the user to a high-restriction package marked with `_H`.
+ 
+pass:[<span style="color:blue;font-weight:600">Volume Placeholder</span>] : 1GB (1073741824 bytes)
+A predefined capped data allowance applied under FUP conditions. 
+
+pass:[<span style="color:blue;font-weight:600">Time Cap</span>] : Based on reset window and restrictions
+Allowed usage time is limited according to the configured reset interval and active time span rules.

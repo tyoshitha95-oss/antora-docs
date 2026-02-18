@@ -1,0 +1,19 @@
+= Session Management
+
+* Efficient session ID generation
+* Timestamp-based cleanup
+* Minimal data in L2RADONLINE table
+
+---
+
+* Efficient Session ID Generation
+  Use structured and unique session identifiers to avoid collisions and simplify tracking.
+
+* Timestamp-Based Cleanup  
+  Remove stale session records from `L2RADONLINE` using time-based validation.
+
+* Minimal Data in `L2RADONLINE` Table  
+  Store only essential live session information to maintain fast read/write operations.
+
+---
+

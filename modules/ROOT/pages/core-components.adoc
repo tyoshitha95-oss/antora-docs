@@ -1,0 +1,53 @@
+= Core Components
+
+* Package
+* Inheritence
+* Database
+* Protocol
+
+pass:[<span style="color:blue;font-weight:600">Package</span>] : Radius::AuthLOCMACQUOTAHW
+
+This is the main Perl module that handles authentication.
+It is specially designed for MAC-based authentication with quota management (like time limits, data limits, etc.), mainly for Huawei and similar network devices.
+
+
+pass:[<span style="color:blue;font-weight:600">Inheritence</span>] : Radius::AuthGeneric, Radius::SqlDb
+
+* pass:[<span style="color:blue;font-weight:600">Radius::AuthGeneric</span>]
+Provides basic RADIUS authentication functions.
+Handles standard authentication requests and responses.
+
+* pass:[<span style="color:blue;font-weight:600">Radius::SqlDb</span>]
+Handles database connectivity and SQL queries.
+Allows the system to check user data, MAC address records, quotas, and policies stored in the database.
+
+
+
+pass:[<span style="color:blue;font-weight:600">Database</span>] : MySQL / MariaDB
+
+The system uses MySQL or MariaDB as the backend database.
+It contains 4 main tables, usually for:
+
+* User or MAC address records
+* Quota tracking (time/volume)
+* Session logs
+* Policy or location restrictions
+
+The database stores all the information needed to decide whether a device is allowed or denied.
+
+
+pass:[<span style="color:blue;font-weight:600">Protocol</span>] : RADIUS (RFC 2865 / RFC 2866)
+
+RADIUS (Remote Authentication Dial-In User Service)
+
+* RFC 2865 → Authentication & Authorization
+* RFC 2866 → Accounting
+
+How it works:
+
+* Device sends authentication request to RADIUS server.
+* Your module checks MAC + quotas from database
+* Server sends Accept or Reject.
+* Accounting logs usage (time/data).
+
+
