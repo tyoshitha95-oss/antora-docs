@@ -1,0 +1,34 @@
+= Overview
+
+The MAC Authentication System is a RADIUS-based network access control solution that authenticates devices using their MAC addresses instead of traditional username/password credentials. It is designed for ISP and enterprise environments where automated device-level authentication, quota enforcement, and policy control are required.
+
+This system integrates with Huawei BNG and Cisco IWAG devices to enforce location-based access, time restrictions, session monitoring, and Fair Usage Policy (FUP). It ensures secure, controlled, and policy-driven network access while maintaining detailed accounting and logging mechanisms.
+
+The platform is built with a modular architecture that supports scalability, centralized policy management, and real-time session validation.
+
+== Key Objectives
+
+* Automate device authentication
+* Enforce data and time quotas
+* Apply Fair Usage Policy dynamically
+* Restrict access by location and time
+* Provide detailed session tracking and monitoring
+
+== Questions Discussed in This Documentation
+
+This documentation answers the following key questions:
+
+* How does MAC-based authentication work in a RADIUS environment?
+* How are MAC addresses validated against the subscriber database?
+* How does the system apply location-based access control?
+* How are time restrictions enforced during authentication?
+* How are volume and session time quotas calculated?
+* When and how is Fair Usage Policy (FUP) applied?
+* How does the accounting handler track active sessions?
+* What log messages are generated during authentication?
+* How can administrators monitor database usage and active sessions?
+* What are the common failure scenarios and how are they handled?
+
+== Scope of the Documentation
+
+This documentation covers system architecture, core functional modules, database structure, policy enforcement logic, configuration parameters, performance considerations, security features, and troubleshooting procedures.

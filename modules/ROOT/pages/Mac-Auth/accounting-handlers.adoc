@@ -31,7 +31,6 @@ my $sql2 = "update L2RADONLINE set TIMESTAMP=$event_timestamp where ACCTSESSIONI
 ----
 
 
-
 === handleAccountingStop
 
 ==== Purpose
