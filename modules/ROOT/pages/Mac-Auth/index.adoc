@@ -1,4 +1,4 @@
-= MAC Authentication System Documentation
+= MAC Authentication Documentation
 :toc: left
 :toclevels: 2
 :sectnums:

@@ -1,5 +1,5 @@
 site:
-  title: Docs Site
+  title: Antora Docs Site
   start_page: project-name::index.adoc
 content:
   sources:
