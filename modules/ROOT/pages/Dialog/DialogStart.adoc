@@ -1,0 +1,29 @@
+= Dialog Documentations
+:toc: left
+:toclevels: 2
+:sectnums:
+
+== Getting Started
+
+To begin:
+
+. Mac-Auth Documentation
+. GPON: Gigabit Passive Optical Network
+. ENT: Enterprise Networks
+. LTE: Long-Term Evolution
+. GuestNet
+
+---
+
+* Mac-Auth Documentation – Guides on MAC address–based authentication, explaining how devices are identified and granted network access.
+
+* GPON – Stands for Gigabit Passive Optical Network, a high-speed fiber-optic broadband technology for delivering internet and voice services.
+
+* ENT – Usually refers to Enterprise Networks, focusing on network infrastructure, management, and services for businesses.
+
+* LTE – Long-Term Evolution, a standard for high-speed wireless communication for mobile devices and data terminals.
+
+* GuestNet – A network service that provides temporary or restricted internet access to visitors without giving full access to the internal network.
+
+
+---

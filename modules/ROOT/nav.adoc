@@ -1,6 +1,8 @@
-* xref:Dialog/Mac-Auth/index.adoc[Dialog]
+* xref:Dialog/DialogStart.adoc[Dialog]
 
-** xref:Dialog/Mac-Auth/overview.adoc[Mac-Auth Documentation]
+** xref:Dialog/Mac-Auth/index.adoc[Mac-Auth Documentation]
+
+*** xref:Dialog/Mac-Auth/overview.adoc[Overview]
 
 *** System Architecture
 **** xref:Dialog/Mac-Auth/core-components.adoc[Core Components]
@@ -64,7 +66,7 @@
 
 ---
 
-* xref:Captive Portal Solution/index3.adoc[Captive Portal Solution]
+* xref:Captive Portal Solution/CptStart.adoc[Captive Portal Solution]
 
 ** xref:Captive Portal Solution/Overview.adoc[Overview]
 
@@ -73,7 +75,7 @@
 
 ---
 
-* xref:WIBIP/index4.adoc[WIBIP]
+* xref:WIBIP/WibipStart.adoc[WIBIP]
 
 ** xref:WIBIP/Overview.adoc[Overview]
 
