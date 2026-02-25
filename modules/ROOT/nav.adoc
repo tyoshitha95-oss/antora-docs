@@ -1,52 +1,43 @@
-* xref:Mac-Auth/index.adoc[MAC-Auth Documentation]
+* xref:Dialog/Mac-Auth/index.adoc[MAC-Auth Documentation]
 
-** xref:Mac-Auth/overview.adoc[Overview]
+** xref:Dialog/Mac-Auth/overview.adoc[Overview]
 
 ** System Architecture
-*** xref:Mac-Auth/core-components.adoc[Core Components]
-*** xref:Mac-Auth/database-tools.adoc[Database Tools]
+*** xref:Dialog/Mac-Auth/core-components.adoc[Core Components]
+*** xref:Dialog/Mac-Auth/database-tools.adoc[Database Tools]
 
 ** Core Function Analysis
-*** xref:Mac-Auth/main-entry-point.adoc[Main Entry Point]
-*** xref:Mac-Auth/authentication-handler.adoc[Authentication Handler]
-*** xref:Mac-Auth/location-resolution.adoc[Location Resolution]
-*** xref:Mac-Auth/time-restriction.adoc[Time Restriction]
-*** xref:Mac-Auth/accounting-handlers.adoc[Accounting Handlers]
+*** xref:Dialog/Mac-Auth/main-entry-point.adoc[Main Entry Point]
+*** xref:Dialog/Mac-Auth/authentication-handler.adoc[Authentication Handler]
+*** xref:Dialog/Mac-Auth/location-resolution.adoc[Location Resolution]
+*** xref:Dialog/Mac-Auth/time-restriction.adoc[Time Restriction]
+*** xref:Dialog/Mac-Auth/accounting-handlers.adoc[Accounting Handlers]
 
 ** Scenarios Analysis
-*** xref:Mac-Auth/scenario-1-5.adoc[Scenario 1 - 5]
-*** xref:Mac-Auth/scenario-6-10.adoc[Scenario 6 - 10]
-*** xref:Mac-Auth/scenario-11-15.adoc[Scenario 11 - 15]
+*** xref:Dialog/Mac-Auth/scenario-1-5.adoc[Scenario 1 - 5]
+*** xref:Dialog/Mac-Auth/scenario-6-10.adoc[Scenario 6 - 10]
+*** xref:Dialog/Mac-Auth/scenario-11-15.adoc[Scenario 11 - 15]
 
 ** Key Configuration Parameters
-*** xref:Mac-Auth/time-calculations.adoc[Time Calculations]
-*** xref:Mac-Auth/session-management.adoc[Session Management]
-*** xref:Mac-Auth/fup.adoc[FUP (Fair Usage Policy)]
+*** xref:Dialog/Mac-Auth/time-calculations.adoc[Time Calculations]
+*** xref:Dialog/Mac-Auth/session-management.adoc[Session Management]
+*** xref:Dialog/Mac-Auth/fup.adoc[FUP (Fair Usage Policy)]
 
 ** Error Handling
-*** xref:Mac-Auth/logging-levels.adoc[Logging Levels]
-*** xref:Mac-Auth/common-error-scenarios.adoc[Common Error Scenarios]
+*** xref:Dialog/Mac-Auth/logging-levels.adoc[Logging Levels]
+*** xref:Dialog/Mac-Auth/common-error-scenarios.adoc[Common Error Scenarios]
 
 ** Performance Consideration
-*** xref:Mac-Auth/database-optimization.adoc[Database Optimization]
-*** xref:Mac-Auth/session-management-perf.adoc[Session Management]
+*** xref:Dialog/Mac-Auth/database-optimization.adoc[Database Optimization]
+*** xref:Dialog/Mac-Auth/session-management-perf.adoc[Session Management Performance]
 
 ** Security Features
-*** xref:Mac-Auth/input-validation.adoc[Input Validation]
-*** xref:Mac-Auth/access-control.adoc[Access Control]
+*** xref:Dialog/Mac-Auth/input-validation.adoc[Input Validation]
+*** xref:Dialog/Mac-Auth/access-control.adoc[Access Control]
 
 ** Monitoring and Troubleshooting
-*** xref:Mac-Auth/key-log-messages.adoc[Key Log Messages]
-*** xref:Mac-Auth/database-monitoring-queries.adoc[Database Monitoring Queries]
-
----
-
-*  xref:Dialog/index2.adoc[Dialog]
-
-** xref:Dialog/Overview.adoc[Overview]
-
-** System Architecture
-*** xref:Dialog/testfile2.adoc[test file 2]
+*** xref:Dialog/Mac-Auth/key-log-messages.adoc[Key Log Messages]
+*** xref:Dialog/Mac-Auth/database-monitoring-queries.adoc[Database Monitoring Queries]
 
 ---
 
@@ -55,7 +46,7 @@
 ** xref:Project 3/Overview.adoc[Overview]
 
 ** System Architecture
-*** xref:Project 3/testfile3.adoc[test file 3]
+*** xref:Project 3/testfile3.adoc[Test File 3]
 
 ---
 
@@ -64,4 +55,4 @@
 ** xref:Project 4/Overview.adoc[Overview]
 
 ** System Architecture
-*** xref:Project 4/testfile4.adoc[test file 4]
+*** xref:Project 4/testfile4.adoc[Test File 4]

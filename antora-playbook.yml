@@ -1,6 +1,6 @@
 site:
-  title: Antora Docs Site
-  start_page: project-name::index.adoc
+  title: Monyfi AAA
+  start_page: ROOT::home.adoc 
 content:
   sources:
   - url: .
