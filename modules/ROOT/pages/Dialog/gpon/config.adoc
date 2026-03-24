@@ -1,0 +1,52 @@
+= Key Configuration Parameters
+
+Parameters defined in API requests:
+
+[cols="1,2,2"]
+|===
+|Parameter |Description |Example
+
+|customfield11
+|PCRF ID (derived as 94<SUBNO>)
+|94367526732
+
+|password
+|Device/user password
+|EonPr73637
+
+|groupname
+|User group (fixed value)
+|GPON
+
+|customfield10
+|User notes (subscriber number)
+|94367526732
+
+|customfield12
+|Main package
+|DNET31
+
+|maxusersessions
+|Maximum simultaneous sessions
+|1
+
+|sessionlimit
+|Session timeout (seconds)
+|172800
+
+|customnumfield1
+|Idle timeout
+|86400
+
+|userip
+|Framed IP address (static use case only)
+|122.255.14.6
+
+|framedIPv6prefix
+|Delegated IPv6 prefix
+|2001:db8:abcd:0012::/64
+
+|customfield13
+|Framed Pool ID (public dynamic)
+|PUBLIC_DYNAMIC / Loopback100
+|===

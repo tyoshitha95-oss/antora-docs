@@ -1,0 +1,54 @@
+= Core Function Analysis
+
+== Create User
+
+Endpoint:
+
+PUT /users/{userid}
+
+Used to create GPON users with different IP assignment modes.
+
+Supported use cases:
+
+* Public Static IP Assignment
+  - Includes userip and framedIPv6prefix
+
+* Private Dynamic IP Assignment
+  - No IP-related parameters
+
+* Public Dynamic IP Assignment
+  - Uses customfield13 (Framed Pool ID)
+
+== Update Package
+
+Endpoint:
+
+PUT /users/{userid}
+
+Updates:
+
+* customfield12 (Main package)
+* customfield10 (User notes)
+
+== Update Password
+
+Endpoint:
+
+PUT /users/{userid}
+
+Updates:
+
+* password
+* userid
+* customfield10
+
+== Change Barring Status
+
+Endpoint:
+
+PUT /users/{userid}/barringstatus/{status}
+
+Controls user access:
+
+* 1 → Operation (bar user)
+* 0 → Remove barring

@@ -1,0 +1,16 @@
+= Logging Levels
+
+* pass:[<span style="color:blue;font-weight:600">LOG_DEBUG</span>] : Detailed debugging information
+* pass:[<span style="color:blue;font-weight:600">LOG_INFO</span>] : General information
+* pass:[<span style="color:blue;font-weight:600">LOG_ERROR</span>] : Error conditions
+
+---
+
+pass:[<span style="color:blue;font-weight:600">LOG_DEBUG</span>] : Detailed debugging information
+Used for detailed debugging information to trace internal processing and variable values.
+
+pass:[<span style="color:blue;font-weight:600">LOG_INFO</span>] : General Information
+Used for general operational messages indicating normal system activity.
+
+pass:[<span style="color:blue;font-weight:600">LOG_ERROR</span>] : Error conditions
+Used to record error conditions that require attention or indicate failed operations.

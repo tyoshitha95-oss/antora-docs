@@ -1,0 +1,25 @@
+= Overview
+
+This document defines REST API endpoints for GPON user management.
+
+Supported operations:
+
+* Create GPON user
+* Update user package
+* Update user password
+* Change user barring status
+
+All APIs:
+
+* Use HTTP PUT method
+* Accept form-urlencoded data
+* Return JSON responses
+
+== Base URLs
+
+* Staging: http://10.62.167.228:80
+* Production: http://10.62.167.150:8080
+
+== Authentication
+
+All API requests require Basic HTTP Authentication via the Authorization header.

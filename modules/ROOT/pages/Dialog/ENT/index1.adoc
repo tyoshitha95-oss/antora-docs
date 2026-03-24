@@ -1,0 +1,34 @@
+= ENT (Enterprise Network) Documentation
+:toc: left
+:toclevels: 2
+:sectnums:
+
+== Getting Started
+
+To begin:
+
+. Configure the RADIUS server for enterprise authentication.
+. Register enterprise subscriber accounts or device MAC addresses.
+. Configure enterprise VLANs and location mappings.
+. Define access policies, bandwidth limits, and security rules.
+. Monitor enterprise sessions, authentication logs, and usage reports.
+
+== Documentation Sections
+
+* Authentication Flow Analysis
+* Policy Engine Configuration
+* Quota Management Logic
+* Database Structure
+* Performace Consideration
+* Security Features
+* Troubleshooting Guide
+
+
+== Version Information
+
+System Version: 3.2.9  
+Last Updated: 2026  
+
+---
+
+

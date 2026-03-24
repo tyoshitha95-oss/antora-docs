@@ -1,0 +1,30 @@
+= System Architecture
+
+The GPON user management system is exposed via REST APIs.
+
+== Components
+
+* API Client
+  - Sends HTTP PUT requests (e.g., CURL)
+
+* GPON API Service
+  - Handles user creation and updates
+  - Validates request parameters
+  - Applies changes to user records
+
+* Data Layer
+  - Stores user attributes returned in responses:
+    - user_id
+    - password
+    - custom fields
+    - session parameters
+    - IP details
+    - barring status
+
+== Flow
+
+1. Client sends PUT request to endpoint
+2. Server authenticates request
+3. Parameters are processed
+4. User record is created/updated
+5. JSON response is returned

@@ -1,0 +1,108 @@
+= Scenario 11 - 15
+
+== pass:[<span style="color:blue;font-weight:600">Scenario 11</span>]: Time Quota Exhausted → Reject
+
+=== Functions Involved
+* `authenticateUser`
+
+=== Logic Flow
+. Calculate remaining time quota 
+. If TimeQuota <= 0 3. Return Access-Reject
+
+
+== pass:[<span style="color:blue;font-weight:600">Scenario 12</span>]: Accounting-Start → Accounting-Response (OK)
+
+=== Functions Involved
+* `handleAccountingStart`
+
+=== Logic Flow
+. Extract session information
+. Insert into `L2RADONLINE` table
+. Return Accounting-Response
+
+=== Database Queries
+
+[source,sql]
+----
+INSERT INTO L2RADONLINE (USERNAME,NASPORTID,NASIPADDRESS,ACCTSESSIONID,TIMESTAMP,FRAMEDIPADDRESS,MAC,LOCID,LASTQT,LASTQV,PACKAGE) 
+VALUES ('MAC','NASPORT','NASIP','SESSIONID',unix_timestamp(now()),inet_aton('CLIENT_IP'),'MAC','LOCID',0,0,'PACKAGE')
+----
+
+
+== pass:[<span style="color:blue;font-weight:600">Scenario 13</span>]: Accounting-Alive → Accounting-Response (OK)
+
+=== Functions Involved
+* `handleAccountingAlive `
+
+=== Logic Flow
+. Extract session ID and timestamp 
+. Update `L2RADONLINE` timestamp
+. Return Accounting-Response
+
+=== Database Queries
+
+[source,sql]
+----
+UPDATE L2RADONLINE 
+SET TIMESTAMP=EVENT_TIMESTAMP 
+WHERE ACCTSESSIONID='SESSION_ID'
+----
+
+== pass:[<span style="color:blue;font-weight:600">Scenario 14</span>]: Accounting-Stop → Accounting-Response (OK)
+
+=== Functions Involved
+* `handleAccountingStop`
+
+=== Logic Flow
+. Extract usage statistics 
+. Update user quotas
+. Insert CDR record
+. Update location quota (if not FUP)
+. Remove from `L2RADONLINE` 
+. Return Accounting-Response
+
+=== Database Queries
+
+==== Update user quotas
+
+[source,sql]
+----
+UPDATE MACL2USERS 
+SET TimeQuota=if(TimeQuota-(SESSION_TIME_DIFF)>0,TimeQuota-(SESSION_TIME_DIFF),0),
+    VolumeQuota=if(VolumeQuota-(VOLUME_DIFF)>0,VolumeQuota-(VOLUME_DIFF),0) 
+WHERE MAC='MAC_ADDRESS' AND LOCID='LOCID'
+----
+
+==== Insert CDR
+
+[source,sql]
+----
+INSERT INTO MACL2CDR (USERNAME,SESSIONID,FRAMEDIP,SESSIONTIME,UPLOAD,DOWNLOAD,PACKAGE,LOCID,TIMESTAMP) 
+VALUES ('MAC','SESSIONID',inet_aton('CLIENT_IP'),SESSION_TIME,UPLOAD_BYTES,DOWNLOAD_BYTES,'PACKAGE','LOCID',unix_timestamp(now()))
+----
+
+==== Update location quota (if not FUP)
+
+[source,sql]
+----
+UPDATE LOCTOPACKAGE 
+SET LOCVOLUMEQUOTA=if(LOCVOLUMEQUOTA-(TOTAL_BYTES)>0,LOCVOLUMEQUOTA-(TOTAL_BYTES),0),
+    LOCVOLUMEQUOTACDR=LOCVOLUMEQUOTACDR+(TOTAL_BYTES) 
+WHERE LOCID='LOCID'
+----
+
+==== Remove session
+
+[source,sql]
+----
+DELETE FROM L2RADONLINE WHERE ACCTSESSIONID='SESSION_ID'
+----
+
+== pass:[<span style="color:blue;font-weight:600">Scenario 15</span>]: Unknown/Invalid Request → Reject
+
+=== Functions Involved
+* `handle_request`
+
+=== Logic Flow
+. Request doesn't match any known type 
+. Return Access-Reject

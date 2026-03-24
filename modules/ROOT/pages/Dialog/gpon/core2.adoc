@@ -1,0 +1,31 @@
+= Private Dynamic IP Assignment
+
+This use case defines GPON user creation without assigning a static IP.
+
+== Description
+
+The user is created without specifying IPv4 or IPv6 parameters.  
+IP allocation is handled dynamically by the system.
+
+== Parameters
+
+No IP-related parameters are included in this request.
+
+== Behavior
+
+* IPv4 address is dynamically assigned
+* No IPv6 prefix is provided in the request
+* No framed pool is specified
+* System handles IP allocation internally
+
+== Example CURL
+
+[source,bash]
+----
+curl --request PUT \
+--url 'http://10.62.167.228:80/users/94367526732' \
+--header 'Content-Type: application/x-www-form-urlencoded' \
+--header 'Accept: application/json' \
+--header 'Authorization: Basic <token>' \
+--data 'customfield11=94367526732&password=EonPr73637&groupname=GPON&customfield10=94367526732&customfield12=DNET31&maxusersessions=1&sessionlimit=172800&customnumfield1=86400'
+----

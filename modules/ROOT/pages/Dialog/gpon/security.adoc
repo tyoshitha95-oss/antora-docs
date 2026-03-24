@@ -1,0 +1,22 @@
+= Security Features
+
+== Authentication
+
+All APIs require:
+
+* Basic HTTP Authentication
+* Base64 encoded credentials in Authorization header
+
+Example:
+
+----
+Authorization: Basic ZGlhbG9nOkQhYWwwZzEyMw==
+----
+
+== Security Behavior
+
+* Only authenticated requests are processed
+* Unauthorized access is restricted
+* Password updates handled via secured API request
+
+No additional encryption or token-based mechanisms are defined in the document.

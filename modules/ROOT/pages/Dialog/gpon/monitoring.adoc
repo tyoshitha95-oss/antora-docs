@@ -1,0 +1,25 @@
+= Monitoring and Troubleshooting
+
+Monitoring is based on API responses.
+
+== Key Fields
+
+* status → operation result
+* statusCode → HTTP status indicator
+* message → operation description
+* data → updated user details
+
+== Troubleshooting Steps
+
+1. Verify endpoint URL
+2. Check Authorization header
+3. Validate request parameters
+4. Ensure correct user ID format
+5. Inspect response message
+
+== Common Issues
+
+* Authentication failure
+* Missing required parameters
+* Incorrect parameter values
+* Invalid endpoint usage

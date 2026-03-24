@@ -1,0 +1,41 @@
+= Public Static IP Assignment
+
+This use case defines GPON user creation with a fixed IPv4 and IPv6 allocation.
+
+== Description
+
+A static IP address is assigned to the user along with an IPv6 prefix.  
+These values are explicitly passed in the API request.
+
+== Additional Parameters
+
+[cols="1,2,2"]
+|===
+|Parameter |Description |Example
+
+|userip
+|Framed IPv4 address assigned to the user
+|122.255.14.6
+
+|framedIPv6prefix
+|Delegated IPv6 prefix assigned to the user
+|2001:db8:abcd:0012::/64
+|===
+
+== Behavior
+
+* The system assigns a fixed IPv4 address to the user
+* IPv6 prefix is statically mapped
+* No dynamic pool allocation is used
+
+== Example CURL
+
+[source,bash]
+----
+curl --request PUT \
+--url 'http://10.62.167.228:80/users/94367526732' \
+--header 'Content-Type: application/x-www-form-urlencoded' \
+--header 'Accept: application/json' \
+--header 'Authorization: Basic <token>' \
+--data 'customfield11=94367526732&password=EonPr73637&groupname=GPON&customfield10=94367526732&customfield12=DNET31&maxusersessions=1&sessionlimit=172800&customnumfield1=86400&userip=122.255.14.6&framedIPv6prefix=2001:db8:abcd:0012::/6'
+----

@@ -1,0 +1,34 @@
+= LTE (Long-Term Evolution) Documentation
+:toc: left
+:toclevels: 2
+:sectnums:
+
+== Getting Started
+
+To begin:
+
+. Configure the RADIUS/AAA server for LTE authentication.
+. Register subscriber identifiers (SIM/IMSI or device MAC).
+. Define LTE location policies and access parameters.
+. Configure data quotas, bandwidth profiles, and FUP thresholds.
+. Monitor subscriber sessions, traffic usage, and network logs.
+
+== Documentation Sections
+
+* Authentication Flow Analysis
+* Policy Engine Configuration
+* Quota Management Logic
+* Database Structure
+* Performace Consideration
+* Security Features
+* Troubleshooting Guide
+
+
+== Version Information
+
+System Version: 3.2.9  
+Last Updated: 2026  
+
+---
+
+

@@ -7,7 +7,7 @@
 
 pass:[<span style="color:blue;font-weight:600">Package</span>] : Radius::AuthLOCMACQUOTAHW
 
-This is the main module that handles authentication.
+This is the main Perl module that handles authentication.
 It is specially designed for MAC-based authentication with quota management (like time limits, data limits, etc.), mainly for Huawei and similar network devices.
 
 

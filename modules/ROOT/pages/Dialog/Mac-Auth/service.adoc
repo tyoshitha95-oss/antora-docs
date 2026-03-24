@@ -1,0 +1,38 @@
+= Service Authentication Use Cases
+
+This page describes scenarios handled during the Service Authentication phase in MAC-based access control systems.  
+These cases occur when a device is already connected and continues its session.
+
+== 7. Continuation (Normal Session)
+
+The device continues its session within quota limits.
+
+*Action:*
+- Access is granted
+- Remaining quota is used
+
+*Example:*
+A user is browsing the network and reconnects after a short break. The system allows continuation using the remaining daily quota.
+
+== 8. Continuation in FUP (Within Reset Window)
+
+The user has exceeded the Fair Usage Policy quota, but the reset window has not passed.
+
+*Action:*
+- Access is allowed
+- Bandwidth is throttled
+
+*Example:*
+A user has used the full 2GB quota, but the daily reset period is still active. They remain connected at reduced speed (e.g., 512 Kbps).
+
+== 9. Continuation in FUP (Outside Reset Window)
+
+The session continues after the reset period has expired.
+
+*Action:*
+- Access is denied
+- Session is no longer valid
+
+*Example:*
+A user tries to continue browsing after the daily quota reset window has expired without re-authenticating. The system rejects the session and requires fresh login.
+

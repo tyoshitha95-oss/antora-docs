@@ -1,0 +1,32 @@
+= Overview
+
+The Enterprise (ENT) Authentication System is a RADIUS-based network access control solution designed for enterprise environments that require secure and policy-driven device authentication. The system enables organizations to manage network access for corporate users, office devices, and enterprise infrastructure while maintaining centralized authentication and accounting mechanisms.
+
+This solution integrates with enterprise network gateways and access devices to enforce location-based access control, session monitoring, bandwidth management, and policy enforcement. It ensures that only authorized devices and users can access enterprise network resources while maintaining detailed logging and monitoring capabilities.
+
+The platform is built with a modular architecture that supports scalability, centralized policy configuration, and real-time session validation across enterprise network environments.
+
+== Key Objectives
+
+* Automate enterprise device authentication
+* Enforce enterprise network access policies
+* Control bandwidth and session usage
+* Restrict access based on network location
+* Provide detailed monitoring and session tracking
+
+== Questions Discussed in This Documentation
+
+* This documentation answers the following key questions:
+* How does enterprise authentication work in a RADIUS environment?
+* How are enterprise devices validated against the subscriber database?
+* How are enterprise access policies applied during authentication?
+* How does the system enforce location-based access control?
+* How are bandwidth and session limits managed?
+* How does the system track active enterprise sessions?
+* What log messages are generated during authentication?
+* How can administrators monitor enterprise network activity?
+* What are the common failure scenarios and how are they handled?
+
+== Scope of the Documentation
+
+This documentation covers system architecture, authentication workflows, policy enforcement mechanisms, database structures, configuration parameters, monitoring procedures, security considerations, and troubleshooting guidelines for enterprise authentication systems.

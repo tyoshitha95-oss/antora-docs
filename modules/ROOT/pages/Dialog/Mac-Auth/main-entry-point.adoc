@@ -13,29 +13,39 @@ Main dispatcher for RADIUS requests.
 
 === Logic Flow
 
-[source,perl]
+[source,pseudocode]
 ----
-if ($p->code eq 'Access-Request') {
-    if (authenticateUser($self,$p) <= 0) {
-        return ($main::REJECT);
-    }
-    $self->adjustReply($p);
-    return ($main::ACCEPT);
-}
-elsif ($p->get_attr('Acct-Status-Type') eq 'Start') {
-    my $accStart = handleAccountingStart($self,$p);
-    return ($accStart == 1) ? ($main::ACCEPT) : ($main::REJECT);
-}
-elsif ($p->get_attr('Acct-Status-Type') eq 'Stop') {
-    my $acctStop = handleAccountingStop($self,$p);
-    return ($acctStop == 1) ? ($main::ACCEPT) : ($main::REJECT);
-}
-elsif ($p->get_attr('Acct-Status-Type') eq 'Alive') {
-    my $acctStop = handleAccountingAlive($self,$p);
-    return ($main::ACCEPT);
-}
-else {
-    return ($main::REJECT);
-}
-----
+FUNCTION processRequest(request):
 
+    IF request.code == "Access-Request" THEN
+        IF authenticateUser(request) <= 0 THEN
+            RETURN REJECT
+        END IF
+        adjustReply(request)
+        RETURN ACCEPT
+
+    ELSE IF request.AcctStatusType == "Start" THEN
+        accStart = handleAccountingStart(request)
+        IF accStart == 1 THEN
+            RETURN ACCEPT
+        ELSE
+            RETURN REJECT
+        END IF
+
+    ELSE IF request.AcctStatusType == "Stop" THEN
+        accStop = handleAccountingStop(request)
+        IF accStop == 1 THEN
+            RETURN ACCEPT
+        ELSE
+            RETURN REJECT
+        END IF
+
+    ELSE IF request.AcctStatusType == "Alive" THEN
+        handleAccountingAlive(request)
+        RETURN ACCEPT
+
+    ELSE
+        RETURN REJECT
+
+END FUNCTION
+----

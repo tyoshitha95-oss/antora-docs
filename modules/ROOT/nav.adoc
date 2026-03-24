@@ -11,19 +11,21 @@
 *** Core Function Analysis
 **** xref:Dialog/Mac-Auth/main-entry-point.adoc[Main Entry Point]
 **** xref:Dialog/Mac-Auth/authentication-handler.adoc[Authentication Handler]
-**** xref:Dialog/Mac-Auth/location-resolution.adoc[Location Resolution]
-**** xref:Dialog/Mac-Auth/time-restriction.adoc[Time Restriction]
+***** xref:Dialog/Mac-Auth/initial.adoc[Initial Authentication]
+***** xref:Dialog/Mac-Auth/service.adoc[Service Authentication]
+***** Scenarios Analysis
+****** xref:Dialog/Mac-Auth/scenario-1-5.adoc[Scenario 1 - 5]
+****** xref:Dialog/Mac-Auth/scenario-6-10.adoc[Scenario 6 - 10]
+****** xref:Dialog/Mac-Auth/scenario-11-15.adoc[Scenario 11 - 15]
+***** xref:Dialog/Mac-Auth/location-resolution.adoc[Location Resolution]
+***** xref:Dialog/Mac-Auth/time-restriction.adoc[Time Restriction]
 **** xref:Dialog/Mac-Auth/accounting-handlers.adoc[Accounting Handlers]
 
-*** Scenarios Analysis
-**** xref:Dialog/Mac-Auth/scenario-1-5.adoc[Scenario 1 - 5]
-**** xref:Dialog/Mac-Auth/scenario-6-10.adoc[Scenario 6 - 10]
-**** xref:Dialog/Mac-Auth/scenario-11-15.adoc[Scenario 11 - 15]
+
 
 *** Key Configuration Parameters
 **** xref:Dialog/Mac-Auth/time-calculations.adoc[Time Calculations]
 **** xref:Dialog/Mac-Auth/session-management.adoc[Session Management]
-**** xref:Dialog/Mac-Auth/fup.adoc[FUP (Fair Usage Policy)]
 
 *** Error Handling
 **** xref:Dialog/Mac-Auth/logging-levels.adoc[Logging Levels]
@@ -41,28 +43,156 @@
 **** xref:Dialog/Mac-Auth/key-log-messages.adoc[Key Log Messages]
 **** xref:Dialog/Mac-Auth/database-monitoring-queries.adoc[Database Monitoring Queries]
 
-** xref:Dialog/gpon/test2.adoc[gpon]
+
+** xref:Dialog/gpon/index2.adoc[GPON]
+
+*** xref:Dialog/gpon/overview2.adoc[Overview]
+
+*** xref:Dialog/gpon/architecture.adoc[System Architecture]
+
+*** xref:Dialog/gpon/core.adoc[Core Function Analysis]
+**** xref:Dialog/gpon/core1.adoc[Public Static IP]
+**** xref:Dialog/gpon/core2.adoc[Private Dynamic IP]
+**** xref:Dialog/gpon/core3.adoc[Public Dynamic IP]
+
+*** xref:Dialog/gpon/config.adoc[Key Configuration Parameters]
+
+*** xref:Dialog/gpon/error.adoc[Error Handling]
+
+*** xref:Dialog/gpon/performance.adoc[Performance Consideration]
+
+*** xref:Dialog/gpon/security.adoc[Security Features]
+
+*** xref:Dialog/gpon/monitoring.adoc[Monitoring and Troubleshooting]
+
+
+
+
+
+** xref:Dialog/ENT/index1.adoc[ENT]
+
+*** xref:Dialog/ENT/overview1.adoc[Overview]
 
 *** System Architecture
-**** xref:Dialog/gpon/test2.adoc[gpon_test]
+**** xref:Dialog/ENT/core-components1.adoc[Core Components]
+**** xref:Dialog/ENT/database-tools1.adoc[Database Tools]
+
+*** Core Function Analysis
+**** xref:Dialog/ENT/main-entry-point1.adoc[Main Entry Point]
+**** xref:Dialog/ENT/authentication-handler1.adoc[Authentication Handler]
+**** xref:Dialog/ENT/location-resolution1.adoc[Location Resolution]
+**** xref:Dialog/ENT/time-restriction1.adoc[Time Restriction]
+**** xref:Dialog/ENT/accounting-handlers1.adoc[Accounting Handlers]
+
+*** Scenarios Analysis
+**** xref:Dialog/ENT/scenario-1-5(1).adoc[Scenario 1 - 5]
+**** xref:Dialog/ENT/scenario-6-10(1).adoc[Scenario 6 - 10]
+**** xref:Dialog/ENT/scenario-11-15(1).adoc[Scenario 11 - 15]
+
+*** Key Configuration Parameters
+**** xref:Dialog/ENT/time-calculations1.adoc[Time Calculations]
+**** xref:Dialog/ENT/session-management1.adoc[Session Management]
+**** xref:Dialog/ENT/fup1.adoc[FUP (Fair Usage Policy)]
+
+*** Error Handling
+**** xref:Dialog/ENT/logging-levels1.adoc[Logging Levels]
+**** xref:Dialog/ENT/common-error-scenarios1.adoc[Common Error Scenarios]
+
+*** Performance Consideration
+**** xref:Dialog/ENT/database-optimization1.adoc[Database Optimization]
+**** xref:Dialog/ENT/session-management-perf1.adoc[Session Management Performance]
+
+*** Security Features
+**** xref:Dialog/ENT/input-validation1.adoc[Input Validation]
+**** xref:Dialog/ENT/access-control1.adoc[Access Control]
+
+*** Monitoring and Troubleshooting
+**** xref:Dialog/ENT/key-log-messages1.adoc[Key Log Messages]
+**** xref:Dialog/ENT/database-monitoring-queries1.adoc[Database Monitoring Queries]
 
 
-** xref:Dialog/ENT/test.adoc[ENT]
+** xref:Dialog/LTE/index4.adoc[LTE]
+
+*** xref:Dialog/LTE/overview4.adoc[Overview]
 
 *** System Architecture
-**** xref:Dialog/ENT/test.adoc[ENT_test]
+**** xref:Dialog/LTE/core-components4.adoc[Core Components]
+**** xref:Dialog/LTE/database-tools4.adoc[Database Tools]
+
+*** Core Function Analysis
+**** xref:Dialog/LTE/main-entry-point4.adoc[Main Entry Point]
+**** xref:Dialog/LTE/authentication-handler4.adoc[Authentication Handler]
+**** xref:Dialog/LTE/location-resolution4.adoc[Location Resolution]
+**** xref:Dialog/LTE/time-restriction4.adoc[Time Restriction]
+**** xref:Dialog/LTE/accounting-handlers4.adoc[Accounting Handlers]
+
+*** Scenarios Analysis
+**** xref:Dialog/LTE/scenario-1-5(4).adoc[Scenario 1 - 5]
+**** xref:Dialog/LTE/scenario-6-10(4).adoc[Scenario 6 - 10]
+**** xref:Dialog/LTE/scenario-11-15(4).adoc[Scenario 11 - 15]
+
+*** Key Configuration Parameters
+**** xref:Dialog/LTE/time-calculations4.adoc[Time Calculations]
+**** xref:Dialog/LTE/session-management4.adoc[Session Management]
+**** xref:Dialog/LTE/fup4.adoc[FUP (Fair Usage Policy)]
+
+*** Error Handling
+**** xref:Dialog/LTE/logging-levels4.adoc[Logging Levels]
+**** xref:Dialog/LTE/common-error-scenarios4.adoc[Common Error Scenarios]
+
+*** Performance Consideration
+**** xref:Dialog/LTE/database-optimization4.adoc[Database Optimization]
+**** xref:Dialog/LTE/session-management-perf4.adoc[Session Management Performance]
+
+*** Security Features
+**** xref:Dialog/LTE/input-validation4.adoc[Input Validation]
+**** xref:Dialog/LTE/access-control4.adoc[Access Control]
+
+*** Monitoring and Troubleshooting
+**** xref:Dialog/LTE/key-log-messages4.adoc[Key Log Messages]
+**** xref:Dialog/LTE/database-monitoring-queries4.adoc[Database Monitoring Queries]
 
 
-** xref:Dialog/LTE/test4.adoc[LTE]
+** xref:Dialog/GuestNet/index3.adoc[GuestNet]
+
+*** xref:Dialog/GuestNet/overview3.adoc[Overview]
 
 *** System Architecture
-**** xref:Dialog/LTE/test4.adoc[LTE_test]
+**** xref:Dialog/GuestNet/core-components3.adoc[Core Components]
+**** xref:Dialog/GuestNet/database-tools3.adoc[Database Tools]
 
+*** Core Function Analysis
+**** xref:Dialog/GuestNet/main-entry-point3.adoc[Main Entry Point]
+**** xref:Dialog/GuestNet/authentication-handler3.adoc[Authentication Handler]
+**** xref:Dialog/GuestNet/location-resolution3.adoc[Location Resolution]
+**** xref:Dialog/GuestNet/time-restriction3.adoc[Time Restriction]
+**** xref:Dialog/GuestNet/accounting-handlers3.adoc[Accounting Handlers]
 
-** xref:Dialog/GuestNet/test3.adoc[GuestNet]
+*** Scenarios Analysis
+**** xref:Dialog/GuestNet/scenario-1-5(3).adoc[Scenario 1 - 5]
+**** xref:Dialog/GuestNet/scenario-6-10(3).adoc[Scenario 6 - 10]
+**** xref:Dialog/GuestNet/scenario-11-15(3).adoc[Scenario 11 - 15]
 
-*** System Architecture
-**** xref:Dialog/GuestNet/test3.adoc[Guest_test]
+*** Key Configuration Parameters
+**** xref:Dialog/GuestNet/time-calculations3.adoc[Time Calculations]
+**** xref:Dialog/GuestNet/session-management3.adoc[Session Management]
+**** xref:Dialog/GuestNet/fup3.adoc[FUP (Fair Usage Policy)]
+
+*** Error Handling
+**** xref:Dialog/GuestNet/logging-levels3.adoc[Logging Levels]
+**** xref:Dialog/GuestNet/common-error-scenarios3.adoc[Common Error Scenarios]
+
+*** Performance Consideration
+**** xref:Dialog/GuestNet/database-optimization3.adoc[Database Optimization]
+**** xref:Dialog/GuestNet/session-management-perf3.adoc[Session Management Performance]
+
+*** Security Features
+**** xref:Dialog/GuestNet/input-validation3.adoc[Input Validation]
+**** xref:Dialog/GuestNet/access-control3.adoc[Access Control]
+
+*** Monitoring and Troubleshooting
+**** xref:Dialog/GuestNet/key-log-messages3.adoc[Key Log Messages]
+**** xref:Dialog/GuestNet/database-monitoring-queries3.adoc[Database Monitoring Queries]
 
 ---
 

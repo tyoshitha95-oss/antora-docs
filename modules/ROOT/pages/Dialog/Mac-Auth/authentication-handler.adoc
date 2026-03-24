@@ -14,47 +14,78 @@ Core authentication logic for `Access-Request` packets.
 
 === Logic Flow
 
-==== Step 1: Location and Time Validation
+== Logic Flow: User Identification
+:toc:
+:toclevels: 2
 
-[source,perl]
+== Step 1: Location and Time Validation
+
+[source,pseudocode]
 ----
-@locdata = getLocation2($self,$p);
-@restriction = getTimespan($self,$p,$locdata[7]);
+BEGIN
 
-if ($locdata[0] == 0) {
-    $self->log($main::LOG_DEBUG, "Location Not found");
-    return 0;
-}
+GET locationData using getLocation2(self, p)
+GET restrictionData using getTimespan(self, p, locationData[7])
 
-if ($restriction[0] == 0) {
-    $self->log($main::LOG_DEBUG, "Time Restricted");
-    return 0;
-}
-----
+IF locationData[0] == 0 THEN
+    LOG "Location Not Found"
+    RETURN 0
+END IF
 
-==== Step 2: Initial Login Detection
+IF restrictionData[0] == 0 THEN
+    LOG "Time Restricted"
+    RETURN 0
+END IF
 
-[source,perl]
-----
-if ($serviceInfo !~/^N/) {  # Init Login Request
-    # Process initial login
-} else {
-    # Process session continuation
-}
-----
+CONTINUE
 
-==== Step 3: User Existence Check and Quota Management
-
-[source,perl]
-----
-if ($locdata[6] == 1) {  # Daily reset
-    $sql = "SELECT *,( unix_timestamp(CURDATE()) - unix_timestamp(LASTRSTTIME) " .
-           " -  86400*(($rst div 86400)-1) ) AS DATEDIFF " .
-           "from MACL2USERS where MAC='$mac' and LOCID='$locid'";
-} else {
-    $sql = "SELECT *,( unix_timestamp(now()) - unix_timestamp(LASTRSTTIME) ) AS DATEDIFF " .
-           "from MACL2USERS where MAC='$mac' and LOCID='$locid'";
-}
+END
 ----
 
+== Step 2: Initial Login Detection
 
+[source,pseudocode]
+----
+BEGIN
+
+IF serviceInfo does NOT start with "N" THEN
+    // Initial Login Request
+    PROCESS initial login
+ELSE
+    // Session Continuation
+    PROCESS session continuation
+END IF
+
+END
+----
+
+== Step 3: User Existence Check and Quota Management
+
+[source,pseudocode]
+----
+BEGIN
+
+IF locationData[6] == 1 THEN
+    // Daily Reset Enabled
+
+    SET query =
+        SELECT user data,
+        (CURRENT_DATE - LAST_RESET_TIME - adjusted daily offset) AS DATEDIFF
+        FROM MACL2USERS
+        WHERE MAC = mac AND LOCID = locid
+
+ELSE
+    // No Daily Reset
+
+    SET query =
+        SELECT user data,
+        (CURRENT_TIME - LAST_RESET_TIME) AS DATEDIFF
+        FROM MACL2USERS
+        WHERE MAC = mac AND LOCID = locid
+
+END IF
+
+EXECUTE query
+
+END
+----

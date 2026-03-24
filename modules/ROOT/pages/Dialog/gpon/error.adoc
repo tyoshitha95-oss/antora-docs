@@ -1,0 +1,32 @@
+= Error Handling
+
+The document defines response format but does not explicitly list error codes.
+
+== Response Structure
+
+All API responses include:
+
+* status
+* message
+* statusCode
+* data (object)
+
+Example success:
+
+----
+{
+  "status": "SUCCESS",
+  "message": "GPON user updated successfully",
+  "statusCode": 200
+}
+----
+
+== Error Conditions (Implicit)
+
+Based on API behavior:
+
+* Invalid authentication → request not processed
+* Missing/incorrect parameters → update failure
+* Invalid user ID → no changes applied
+
+Errors are indicated through response message and status.

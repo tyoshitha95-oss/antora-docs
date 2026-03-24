@@ -1,0 +1,15 @@
+= Performance Consideration
+
+The document does not define explicit performance metrics.
+
+Operational considerations based on parameters:
+
+* sessionlimit controls session duration
+* customnumfield1 defines idle timeout
+* maxusersessions limits concurrent sessions
+
+Efficient usage:
+
+* Use correct parameter set per use case
+* Avoid redundant PUT requests
+* Ensure proper session configuration to reduce load
