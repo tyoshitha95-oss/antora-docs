@@ -51,9 +51,6 @@
 *** xref:Dialog/gpon/architecture.adoc[System Architecture]
 
 *** xref:Dialog/gpon/core.adoc[Core Function Analysis]
-**** xref:Dialog/gpon/core1.adoc[Public Static IP]
-**** xref:Dialog/gpon/core2.adoc[Private Dynamic IP]
-**** xref:Dialog/gpon/core3.adoc[Public Dynamic IP]
 
 *** xref:Dialog/gpon/config.adoc[Key Configuration Parameters]
 

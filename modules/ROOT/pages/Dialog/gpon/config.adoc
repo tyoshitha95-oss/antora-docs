@@ -1,52 +1,43 @@
 = Key Configuration Parameters
 
-Parameters defined in API requests:
+This page consolidates all parameters used in GPON User Management APIs. Each parameter is essential for proper provisioning and consistent subscriber behavior.
 
-[cols="1,2,2"]
+All parameters are passed as **form fields** (`application/x-www-form-urlencoded`). Their values influence the subscriber’s service, IP assignment, and session behavior.
+
+[cols="1,2,3,2",options="header"]
 |===
-|Parameter |Description |Example
-
-|customfield11
-|PCRF ID (derived as 94<SUBNO>)
-|94367526732
-
-|password
-|Device/user password
-|EonPr73637
-
-|groupname
-|User group (fixed value)
-|GPON
-
-|customfield10
-|User notes (subscriber number)
-|94367526732
-
-|customfield12
-|Main package
-|DNET31
-
-|maxusersessions
-|Maximum simultaneous sessions
-|1
-
-|sessionlimit
-|Session timeout (seconds)
-|172800
-
-|customnumfield1
-|Idle timeout
-|86400
-
-|userip
-|Framed IP address (static use case only)
-|122.255.14.6
-
-|framedIPv6prefix
-|Delegated IPv6 prefix
-|2001:db8:abcd:0012::/64
-
-|customfield13
-|Framed Pool ID (public dynamic)
-|PUBLIC_DYNAMIC / Loopback100
+| Parameter            | Used In                     | Description                              | Example / Default
+| `customfield11`      | Create (all)                | PCRF ID / subscriber identifier. Unique for each subscriber. | `94367526732`
+| `password`           | Create, Update Password     | ONT/ONU device password. Critical for device authentication. | `EonPr73637`
+| `groupname`          | Create                      | RADIUS group. Must always be `"GPON"`. | `GPON`
+| `customfield10`      | All                         | Subscriber notes / audit field for traceability. | `94367526732`
+| `customfield12`      | Create, Update Package      | Main service package assigned to the subscriber. | `DNET31`
+| `maxusersessions`    | Create                      | Maximum concurrent sessions allowed per subscriber. | `1`
+| `sessionlimit`       | Create                      | Maximum session duration in seconds (48 hours default). | `172800`
+| `customnumfield1`    | Create                      | Idle timeout in seconds (disconnect inactive sessions). | `86400`
+| `userip`             | Public Static only           | Fixed IPv4 address for static IP assignments. | `122.255.14.6`
+| `framedIPv6prefix`   | Public Static only           | Delegated IPv6 prefix for static IP subscribers. | `2001:db8:abcd:0012::/6`
+| `customfield13`      | Public Dynamic only          | Framed Pool name for dynamic public IP allocation. | `PUBLIC_DYNAMIC`
+| `userid`             | Update Password             | Full subscriber ID used for password update. | `94367526732`
+| `barringstatus`      | Change Barring Status       | 0 = active, 1 = barred (suspends service immediately). | `1`
 |===
+
+**Notes and Operational Guidance**
+
+* `customfield11` must match the PCRF/subscriber identifier pattern. Incorrect values may lead to provisioning failure.  
+* `password` changes are reflected immediately; store securely on the client side.  
+* `groupname` is always `"GPON"`; changing it may break RADIUS authentication.  
+* `customfield12` controls package activation; any invalid package name may be rejected by the backend.  
+* Session and idle parameters (`maxusersessions`, `sessionlimit`, `customnumfield1`) affect RADIUS and OLT/ONT behavior. Adjust carefully for high-volume deployments.  
+* IP parameters must correspond to the chosen use case (static vs dynamic).  
+* For Public Dynamic IP assignments, `customfield13` selects the correct IP pool. Using the wrong pool may result in IP conflicts.  
+* Audit fields (`customfield10`, `create_user`, `create_date`, `last_update`) are critical for troubleshooting and compliance.  
+* For bulk provisioning, maintain consistent formatting of all parameters to avoid API rejections.  
+* Logging recommended: record request payload (excluding passwords) and full JSON responses.  
+* Always validate JSON `status` before acting on the `data` object to ensure reliable automation.  
+* Avoid mixing IP assignment strategies in repeated API calls for the same subscriber.  
+
+**Summary:**  
+This table serves as a single reference for all operational and functional parameters required for managing GPON subscribers. It ensures consistent behavior across static, dynamic, and hybrid deployments, while enabling monitoring and troubleshooting.  
+
+---

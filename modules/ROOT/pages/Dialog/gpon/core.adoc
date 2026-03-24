@@ -1,54 +1,126 @@
 = Core Function Analysis
 
-== Create User
+This section provides detailed functional analysis of each GPON user management operation, including specialized use cases for IP assignment.
 
-Endpoint:
+=== Public Static IP Assignment
 
-PUT /users/{userid}
+**Use Case**  
+Assign a fixed public IPv4 address and an IPv6 prefix to the subscriber. Typically used for business or enterprise customers who require static IPs for hosting services, VPNs, or specific routing.
 
-Used to create GPON users with different IP assignment modes.
+**Operational Notes**
 
-Supported use cases:
+* Both IPv4 and IPv6 addresses are specified explicitly in the request.
+* IP addresses are not dynamically assigned; conflicts must be avoided by the client.
+* Ensures consistent reachability for the subscriber’s services.
+* Session parameters (`maxusersessions`, `sessionlimit`) still apply and are enforced by the platform.
+* Audit fields such as `create_user` and `last_update` provide traceability for all changes.
+* API returns a full user object including IP information after creation.
+* IPv6 prefix must conform to delegated addressing requirements; invalid prefixes may cause errors in downstream provisioning.
 
-* Public Static IP Assignment
-  - Includes userip and framedIPv6prefix
+**Usage of Parameters**
 
-* Private Dynamic IP Assignment
-  - No IP-related parameters
+[cols="2,2,2,2",options="header"]
+|===
+| Parameter          | Expected Value          | Value Derivation                  | Example
+| `customfield11`    | PCRF ID                 | `94<SUBNO>`                       | `94367526732`
+| `password`         | Device password         | `PASSWORD`                        | `EonPr73637`
+| `groupname`        | User Group              | Hard-coded `"GPON"`               | `GPON`
+| `customfield10`    | User Notes              | `94<SUBNO>`                       | `94367526732`
+| `customfield12`    | Main package            | `MAIN_PKG`                        | `DNET31`
+| `maxusersessions`  | Max simultaneous sessions | —                               | `1`
+| `sessionlimit`     | Session timeout (seconds) | —                              | `172800`
+| `customnumfield1`  | Idle timeout (seconds)  | —                                 | `86400`
+| `userip`           | Framed IP Address       | Public static IPv4                | `122.255.14.6`
+| `framedIPv6prefix` | Delegated IPv6 Prefix   | IPv6 prefix                       | `2001:db8:abcd:0012::/6`
+|===
 
-* Public Dynamic IP Assignment
-  - Uses customfield13 (Framed Pool ID)
+**Example cURL**
 
-== Update Package
+[source,bash]
+----
+curl --request PUT \
+--url 'http://10.62.167.228:80/users/94367526732' \
+--header 'Content-Type: application/x-www-form-urlencoded' \
+--header 'Accept: application/json' \
+--header 'Authorization: Basic <token>' \
+--data 'customfield11=94367526732&password=EonPr73637&groupname=GPON&customfield10=94367526732&customfield12=DNET31&maxusersessions=1&sessionlimit=172800&customnumfield1=86400&userip=122.255.14.6&framedIPv6prefix=2001:db8:abcd:0012::/6'
+----
 
-Endpoint:
+=== Private Dynamic IP Assignment
 
-PUT /users/{userid}
+**Use Case**  
+Assign a private IPv4 address from the operator’s internal pool. Typically used for residential or non-enterprise users.
 
-Updates:
+**Operational Notes**
 
-* customfield12 (Main package)
-* customfield10 (User notes)
+* IPv4 is dynamically assigned by the operator.
+* IPv6 prefix may be optionally delegated.
+* No `userip` or `framedIPv6prefix` parameters are passed.
+* Suitable for large-scale deployments with dynamic address allocation.
+* Audit and session parameters are still applied.
+* Avoid repeated requests for the same user to prevent inconsistent state.
 
-== Update Password
+[cols="2,2,2,2",options="header"]
+|===
+| Parameter          | Expected Value          | Value Derivation                  | Example
+| `customfield11`    | PCRF ID                 | `94<SUBNO>`                       | `94367526732`
+| `password`         | Device password         | `PASSWORD`                        | `EonPr73637`
+| `groupname`        | User Group              | Hard-coded `"GPON"`               | `GPON`
+| `customfield10`    | User Notes              | `94<SUBNO>`                       | `94367526732`
+| `customfield12`    | Main package            | `MAIN_PKG`                        | `DNET31`
+| `maxusersessions`  | Max simultaneous sessions | —                               | `1`
+| `sessionlimit`     | Session timeout (seconds) | —                              | `172800`
+| `customnumfield1`  | Idle timeout (seconds)  | —                                 | `86400`
+|===
 
-Endpoint:
+**Example cURL**
 
-PUT /users/{userid}
+[source,bash]
+----
+curl --request PUT \
+--url 'http://10.62.167.228:80/users/94367526732' \
+--header 'Content-Type: application/x-www-form-urlencoded' \
+--header 'Accept: application/json' \
+--header 'Authorization: Basic <token>' \
+--data 'customfield11=94367526732&password=EonPr73637&groupname=GPON&customfield10=94367526732&customfield12=DNET31&maxusersessions=1&sessionlimit=172800&customnumfield1=86400'
+----
 
-Updates:
+=== Public Dynamic IP Assignment
 
-* password
-* userid
-* customfield10
+**Use Case**  
+Assign a public IPv4 address dynamically from a named pool (e.g., `PUBLIC_DYNAMIC`). Used when public addressing is required but static assignment is unnecessary.
 
-== Change Barring Status
+**Operational Notes**
 
-Endpoint:
+* IPv4 address is allocated from a pool defined by `customfield13`.
+* No static `userip` or `framedIPv6prefix` required.
+* Suitable for business or residential users needing public IPs.
+* Audit fields provide full traceability of which system initiated the request.
+* Session limits and idle timeout parameters are applied consistently.
+* The API ensures atomic update operations; repeated calls do not create duplicate users.
 
-PUT /users/{userid}/barringstatus/{status}
+[cols="2,2,2,2",options="header"]
+|===
+| Parameter          | Expected Value          | Value Derivation                  | Example
+| `customfield11`    | PCRF ID                 | `94<SUBNO>`                       | `94367526732`
+| `password`         | Device password         | `PASSWORD`                        | `EonPr73637`
+| `groupname`        | User Group              | Hard-coded `"GPON"`               | `GPON`
+| `customfield10`    | User Notes              | `94<SUBNO>`                       | `94367526732`
+| `customfield12`    | Main package            | `MAIN_PKG`                        | `DNET31`
+| `maxusersessions`  | Max simultaneous sessions | —                               | `1`
+| `sessionlimit`     | Session timeout (seconds) | —                              | `172800`
+| `customnumfield1`  | Idle timeout (seconds)  | —                                 | `86400`
+| `customfield13`    | Framed Pool ID          | Pool name                         | `PUBLIC_DYNAMIC`
+|===
 
-Controls user access:
+**Example cURL**
 
-* 1 → Operation (bar user)
-* 0 → Remove barring
+[source,bash]
+----
+curl --request PUT \
+--url 'http://10.62.167.228:80/users/94367526732' \
+--header 'Content-Type: application/x-www-form-urlencoded' \
+--header 'Accept: application/json' \
+--header 'Authorization: Basic <token>' \
+--data 'customfield11=94367526732&password=EonPr73637&groupname=GPON&customfield10=94367526732&customfield12=DNET31&maxusersessions=1&sessionlimit=172800&customnumfield1=86400&customfield13=PUBLIC_DYNAMIC'
+----

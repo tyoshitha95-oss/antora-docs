@@ -1,25 +1,51 @@
 = Monitoring and Troubleshooting
 
-Monitoring is based on API responses.
+Monitoring subscriber management operations is critical to ensure service continuity. This section provides guidance on observing key fields and handling issues.
 
-== Key Fields
+**Key Fields to Monitor**
 
-* status → operation result
-* statusCode → HTTP status indicator
-* message → operation description
-* data → updated user details
+* `last_update` — Timestamp of the last API update. Detect stale or stuck records.  
+* `barringstatus` — Indicates whether subscriber is active (0) or barred (1).  
+* `status` — Internal user status flag, indicating provisioning state.  
+* `customfield13` — Verifies correct dynamic IP pool assignment.  
+* `create_user` — Identifies which system performed the operation.
 
-== Troubleshooting Steps
+**Common Issues and Steps**
 
-1. Verify endpoint URL
-2. Check Authorization header
-3. Validate request parameters
-4. Ensure correct user ID format
-5. Inspect response message
+1. Authentication Failure  
+   * Verify Basic Auth credentials.  
+   * Ensure correct encoding.
 
-== Common Issues
+2. Parameter Errors  
+   * Validate all required fields for chosen IP assignment.  
+   * Check `customfield11`, `customfield12`, and optional IP fields.
 
-* Authentication failure
-* Missing required parameters
-* Incorrect parameter values
-* Invalid endpoint usage
+3. IP Assignment Conflicts  
+   * Static IP: Check `userip` and `framedIPv6prefix`.  
+   * Dynamic IP: Confirm `customfield13` points to correct pool.  
+
+4. Session Problems  
+   * Ensure `maxusersessions` and `sessionlimit` are consistent with actual usage.  
+   * Monitor idle timeouts (`customnumfield1`) to avoid unexpected disconnections.
+
+5. Response Verification  
+   * Always check `status` in JSON response.  
+   * Compare returned `data` object with submitted values.  
+   * Use timestamps (`create_date`, `last_update`) to correlate with upstream events.
+
+**Logging Recommendations**
+
+* Record full request payloads (mask passwords) and JSON responses.  
+* Maintain separate logs for staging and production environments.  
+* Use logs for troubleshooting repeated provisioning failures.  
+* Track which scripts/systems initiated changes via `create_user`.  
+
+**Operational Notes**
+
+* Implement automated alerts for repeated failures or stale data.  
+* Validate IP pool availability for dynamic assignments before bulk provisioning.  
+* Use monitoring dashboards to track subscriber barring status and session parameters.  
+* Ensure compliance by auditing all changes with timestamps and operator IDs.  
+* For large deployments, periodically reconcile backend RADIUS/OLT records with API data.  
+
+---

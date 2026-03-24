@@ -9,7 +9,7 @@ To begin:
 
 . Configure API access with Basic Authentication.
 . Ensure connectivity to GPON API endpoints (Staging/Production).
-. Prepare subscriber details (MSISDN, package, credentials).
+. Prepare subscriber details (credentials).
 . Select appropriate IP assignment type (Static/Dynamic).
 . Use API endpoints to create and manage users.
 . Monitor API responses and user status.
