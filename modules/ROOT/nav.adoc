@@ -66,46 +66,32 @@
 
 
 
-** xref:Dialog/ENT/index1.adoc[ENT]
+** xref:Dialog/ENT/index3.adoc[ENT]
 
-*** xref:Dialog/ENT/overview1.adoc[Overview]
+*** xref:Dialog/ENT/overview3.adoc[Overview]
 
-*** System Architecture
-**** xref:Dialog/ENT/core-components1.adoc[Core Components]
-**** xref:Dialog/ENT/database-tools1.adoc[Database Tools]
+*** xref:Dialog/gpon/architecture3.adoc[System Architecture]
 
-*** Core Function Analysis
-**** xref:Dialog/ENT/main-entry-point1.adoc[Main Entry Point]
-**** xref:Dialog/ENT/authentication-handler1.adoc[Authentication Handler]
-**** xref:Dialog/ENT/location-resolution1.adoc[Location Resolution]
-**** xref:Dialog/ENT/time-restriction1.adoc[Time Restriction]
-**** xref:Dialog/ENT/accounting-handlers1.adoc[Accounting Handlers]
+*** xref:Dialog/gpon/core3.adoc[Core Function Analysis]
 
-*** Scenarios Analysis
-**** xref:Dialog/ENT/scenario-1-5(1).adoc[Scenario 1 - 5]
-**** xref:Dialog/ENT/scenario-6-10(1).adoc[Scenario 6 - 10]
-**** xref:Dialog/ENT/scenario-11-15(1).adoc[Scenario 11 - 15]
+*** xref:Dialog/gpon/config3.adoc[Key Configuration Parameters]
 
-*** Key Configuration Parameters
-**** xref:Dialog/ENT/time-calculations1.adoc[Time Calculations]
-**** xref:Dialog/ENT/session-management1.adoc[Session Management]
-**** xref:Dialog/ENT/fup1.adoc[FUP (Fair Usage Policy)]
+*** xref:Dialog/gpon/error3.adoc[Error Handling]
 
-*** Error Handling
-**** xref:Dialog/ENT/logging-levels1.adoc[Logging Levels]
-**** xref:Dialog/ENT/common-error-scenarios1.adoc[Common Error Scenarios]
+*** xref:Dialog/gpon/performance3.adoc[Performance Consideration]
 
-*** Performance Consideration
-**** xref:Dialog/ENT/database-optimization1.adoc[Database Optimization]
-**** xref:Dialog/ENT/session-management-perf1.adoc[Session Management Performance]
+*** xref:Dialog/gpon/security3.adoc[Security Features]
 
-*** Security Features
-**** xref:Dialog/ENT/input-validation1.adoc[Input Validation]
-**** xref:Dialog/ENT/access-control1.adoc[Access Control]
+*** xref:Dialog/gpon/monitoring3.adoc[Monitoring and Troubleshooting]
 
-*** Monitoring and Troubleshooting
-**** xref:Dialog/ENT/key-log-messages1.adoc[Key Log Messages]
-**** xref:Dialog/ENT/database-monitoring-queries1.adoc[Database Monitoring Queries]
+
+
+
+
+
+
+
+
 
 
 ** xref:Dialog/LTE/index4.adoc[LTE]
