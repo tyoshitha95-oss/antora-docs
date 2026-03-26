@@ -1,0 +1,39 @@
+= System Architecture
+
+The GuestNet system is built on top of the Radiator RADIUS server and follows a modular architecture.
+
+The core module, AuthGUESTNET, extends two base classes:
+
+* Radius::AuthGeneric – provides authentication framework and reply handling
+* Radius::SqlDb – provides database connectivity and query execution
+
+The system consists of the following key components:
+
+* Radiator RADIUS Server
+* AuthGUESTNET Module
+* MySQL Database
+* In-Memory Cache
+* Network Access Devices (NAS)
+* Reporting Systems
+
+The Radiator server receives RADIUS requests from NAS devices such as wireless controllers or access points.
+
+These requests are passed to the AuthGUESTNET module, which processes authentication and accounting logic.
+
+The module interacts with the MySQL database to retrieve user data from tables such as ACCOUNT, LOCATION, PACKAGES, and RADONLINE.
+
+To improve performance, frequently accessed data such as location mappings and package definitions are stored in in-memory cache structures.
+
+The cache is refreshed periodically (once per hour) using the loadCache function.
+
+During authentication, the system determines the user’s location using the getLocation2 function, which supports both circuit-id and IP-based detection.
+
+The system then validates user credentials, package eligibility, and concurrency limits before responding with Access-Accept or Access-Reject.
+
+Accounting requests are processed separately for Start, Interim, and Stop events.
+
+Session data is stored in the RADONLINE table for active sessions and moved to CDR/CDRS tables upon session termination.
+
+The architecture ensures separation between authentication logic, database operations, and session tracking.
+
+This modular design allows the system to scale efficiently and handle high volumes of guest authentication requests.
