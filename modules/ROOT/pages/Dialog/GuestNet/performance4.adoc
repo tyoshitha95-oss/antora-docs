@@ -1,0 +1,28 @@
+= Performance Consideration
+
+
+Performance optimization in GuestNet is achieved through caching and efficient database operations.
+
+The loadCache function minimizes database queries by storing location and package data in memory.
+
+Cache refresh occurs once per hour, reducing overhead during high request volumes.
+
+Session tracking is optimized using the RADONLINE table.
+
+Delta-based accounting reduces unnecessary database writes.
+
+Bulk updates are avoided by processing only incremental changes.
+
+Concurrency checks use indexed queries for fast lookup.
+
+Location resolution uses optimized SQL queries with indexing.
+
+Handling of Access-Request is designed to be lightweight and efficient.
+
+Accounting operations are separated to avoid blocking authentication.
+
+Limiting session timeout to 7 days prevents long-running sessions.
+
+Efficient handling of interim updates reduces system load.
+
+Overall, the system is optimized for high scalability and real-time processing.
