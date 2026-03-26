@@ -1,34 +1,26 @@
 = Overview
 
-The MAC Authentication System is a RADIUS-based network access control solution that authenticates devices using their MAC addresses instead of traditional username/password credentials. It is designed for ISP and enterprise environments where automated device-level authentication, quota enforcement, and policy control are required.
 
-This system integrates with Huawei BNG and Cisco IWAG devices to enforce location-based access, time restrictions, session monitoring, and Fair Usage Policy (FUP). It ensures secure, controlled, and policy-driven network access while maintaining detailed accounting and logging mechanisms.
+The GuestNet (GUESTNET) Authentication System is a RADIUS-based captive portal solution designed to manage guest WiFi access using PIN-based authentication.
 
-The platform is built with a modular architecture that supports scalability, centralized policy management, and real-time session validation.
+The system is implemented as a custom Radiator module (`AuthGUESTNET.pm`) that handles both authentication and accounting operations for guest users connecting to public or enterprise WiFi networks.
 
-== Key Objectives
+Guest users are provisioned with temporary credentials (PIN and password), which are validated during authentication. The system ensures controlled access by enforcing location-based restrictions, package policies, and session limits.
 
-* Automate device authentication
-* Enforce data and time quotas
-* Apply Fair Usage Policy dynamically
-* Restrict access by location and time
-* Provide detailed session tracking and monitoring
+The module integrates with a backend MySQL database to store user accounts, session data, package definitions, and location mappings. It also maintains an in-memory cache to optimize performance and reduce database load.
 
-== Questions Discussed in This Documentation
+Authentication requests are processed through the RADIUS Access-Request flow, where user credentials, IP address, and location information are validated before granting access.
 
-This documentation answers the following key questions:
+The system supports dynamic location detection using both Layer 2 (circuit-id) and Layer 3 (IP-based) mechanisms, ensuring accurate mapping of users to physical WiFi locations.
 
-* How does MAC-based authentication work in a RADIUS environment?
-* How are MAC addresses validated against the subscriber database?
-* How does the system apply location-based access control?
-* How are time restrictions enforced during authentication?
-* How are volume and session time quotas calculated?
-* When and how is Fair Usage Policy (FUP) applied?
-* How does the accounting handler track active sessions?
-* What log messages are generated during authentication?
-* How can administrators monitor database usage and active sessions?
-* What are the common failure scenarios and how are they handled?
+GuestNet also supports multiple package types that define session duration, validity period, idle timeout, and concurrency limits.
 
-== Scope of the Documentation
+Accounting functionality is fully supported through Start, Interim (Alive), and Stop events. These events track session usage, update time quotas, and generate detailed CDR records.
 
-This documentation covers system architecture, core functional modules, database structure, policy enforcement logic, configuration parameters, performance considerations, security features, and troubleshooting procedures.
+The system ensures accurate session tracking using the RADONLINE table, which maintains active session data in real time.
+
+Upon session termination, usage data is written to CDR and CDRS tables for reporting and analytics.
+
+The Class attribute is used to carry session metadata across authentication and accounting stages, enabling consistent tracking of user, location, and package information.
+
+Overall, GuestNet provides a scalable, efficient, and policy-driven solution for managing guest WiFi access with strong control over authentication, session usage, and reporting.
