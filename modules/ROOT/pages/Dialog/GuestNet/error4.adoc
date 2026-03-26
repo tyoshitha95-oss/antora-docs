@@ -11,6 +11,7 @@ Common authentication failures include:
 * Account inactive or expired
 * Session quota exhausted
 
+
 If the ACCOUNT record is not found, authentication fails immediately.
 
 Password validation ensures that incorrect credentials are rejected.
