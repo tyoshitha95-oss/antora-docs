@@ -7,28 +7,32 @@
 
 To begin:
 
-. Configure RADIUS server.
-. Register subscriber MAC addresses.
-. Define location and time policies.
-. Set quota and FUP thresholds.
-. Monitor sessions and logs.
+. Configure RADIUS and captive portal settings.
+. Define guest access policies and profiles.
+. Set bandwidth limits and session durations.
+. Configure authentication methods (OTP, voucher, etc.).
+. Enable logging and monitoring mechanisms.
 
 == Documentation Sections
 
-* Authentication Flow Analysis
-* Policy Engine Configuration
-* Quota Management Logic
+* Guest Authentication Flow Analysis
+* Captive Portal Configuration
+* Access Policy Management
+* Session and Bandwidth Control
 * Database Structure
-* Performace Consideration
+* Performance Consideration
 * Security Features
-* Troubleshooting Guide
+* Monitoring and Troubleshooting Guide
 
+== Key Features
+
+* Temporary guest access provisioning
+* Multiple authentication methods support
+* Real-time session tracking
+* Flexible policy enforcement
+* Scalable user management
 
 == Version Information
 
-System Version: 3.2.9  
+System Version: 1.0.0  
 Last Updated: 2026  
-
----
-
-

@@ -108,7 +108,7 @@
 **** xref:Dialog/ENT/database-monitoring-queries1.adoc[Database Monitoring Queries]
 
 
-** xref:Dialog/GuestNet/index4.adoc[GPON]
+** xref:Dialog/GuestNet/index4.adoc[GuestNet]
 
 *** xref:Dialog/GuestNet/overview4.adoc[Overview]
 
