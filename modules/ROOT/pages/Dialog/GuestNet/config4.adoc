@@ -1,0 +1,45 @@
+= Key Configuration Parameters
+
+The GuestNet system relies on several key parameters for authentication and session management.
+
+User-related parameters:
+
+* User-Name – Guest PIN
+* Password – User credential
+* Framed-IP-Address – Assigned IP address
+
+Location parameters:
+
+* Circuit-ID – Used for L2 detection
+* Remote-ID – Identifies access point or SSID
+* CI (Location Code) – Resolved location identifier
+
+Package parameters:
+
+* PKG_ID – Assigned package
+* TIME_QUOTA – Total allowed usage time
+* VALID_FOR – Validity duration
+* IDLE_TIMEOUT – Disconnect idle users
+* CONCURRENCY – Maximum simultaneous sessions
+
+Session parameters:
+
+* Acct-Session-Id – Unique session identifier
+* Session-Timeout – Maximum session duration
+* Idle-Timeout – Inactivity timeout
+
+Database tables:
+
+* ACCOUNT – User credentials and usage
+* RADONLINE – Active sessions
+* CDR/CDRS – Session history
+* LOCATION – WiFi locations
+* PACKAGES – Package definitions
+
+Class attribute parameters:
+
+* LOCID – Location ID
+* CUID – User identifier
+* PKG – Package name
+
+These parameters control authentication, session behavior, and accounting operations.
