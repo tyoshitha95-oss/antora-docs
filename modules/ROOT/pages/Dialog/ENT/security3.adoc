@@ -1,0 +1,33 @@
+= Security Features
+
+Security in AAA Enterprise system is focused on authentication and access control.
+
+Primary authentication is based on username and password.
+
+Framed route solution adds additional validation using MSISDN and APN.
+
+Router-based solution relies on router-level credentials.
+
+Barring status allows immediate service restriction.
+
+Only authorized systems (CRM) can provision users.
+
+API access should be restricted to trusted sources.
+
+Passwords must be securely stored and transmitted.
+
+Sub-template provides firewall-level security rules.
+
+QoS templates ensure controlled network usage.
+
+Audit logs track provisioning and updates.
+
+User identity validation prevents unauthorized access.
+
+Domain removal logic ensures correct authentication.
+
+Vendor-specific AVPs ensure secure communication with NAS devices.
+
+Security measures prevent misuse of network resources.
+
+Proper configuration is critical to avoid vulnerabilities.

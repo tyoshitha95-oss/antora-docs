@@ -1,0 +1,63 @@
+= Core Function Analysis
+
+The core functionality of AAA Enterprise system revolves around authentication and accounting mechanisms.
+
+=== Router-Based Solution
+
+In router-based authentication, enterprise users are authenticated using username and password configured on routers.
+
+The authentication request contains a username with domain format (e.g., user@domain).
+
+AAA removes the domain part and validates the username and password against the database.
+
+If credentials match and the user is not barred, AAA sends an Access-Accept response.
+
+Otherwise, it sends Access-Reject.
+
+Routing attributes such as VRF, Loopback, and Framed-IP are included in the response.
+
+Accounting is performed using Tunnel-Link Start and Stop messages, generating CDR records.
+
+=== Framed Address Scenarios
+
+Different framed address behaviors are observed:
+
+1. Framed address from PGW/SMF (Authentication Only)  
+   - Used only during authentication  
+   - Requires Dialog to send required packets  
+
+2. Framed address from AAA (LNS)  
+   - AAA assigns framed IP  
+   - Pending due to missing data  
+
+3. Framed address from AAA (PGW/SMF)  
+   - Fully implemented  
+   - Works for both authentication and accounting  
+
+4. Framed address sent by PGW/SMF  
+   - Fully operational  
+   - Verified for both authentication and accounting  
+
+=== Parameter Behavior Logic
+
+[cols="1,1,2", options="header"]
+|===
+| DB | Request | Result
+
+| Yes | No  | DB value is returned
+| No  | Yes | Request value is returned
+| Yes | Yes | Request value takes priority
+| No  | No  | Error is returned
+|===
+
+This defines how framed address is selected in responses.
+
+=== Accounting Behavior
+
+Accounting records are generated for successful sessions.
+
+CDR files are created in a standard format and shared with BI systems.
+
+Separate files can be generated based on user type using groupname.
+
+Overall, the system ensures flexible authentication and consistent routing behavior.

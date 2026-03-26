@@ -1,0 +1,44 @@
+= System Architecture
+
+The AAA Enterprise system architecture consists of multiple integrated components working together to manage enterprise subscriber authentication and provisioning.
+
+The primary components include:
+
+* Dialog CRM System  
+* AAA Server (Authentication, Authorization, Accounting)  
+* Network Access Servers (Huawei PGW, Cisco LNS/ASR)  
+* Backend Data Store (User Profiles)  
+* BI Systems for CDR processing  
+
+The CRM system acts as the provisioning source. It sends subscriber data to AAA using Add/Update APIs.
+
+The AAA system processes these requests and stores user profiles with all required parameters such as UserID, password, routing fields, QoS templates, and barring status.
+
+During authentication, network devices (PGW or LNS) send RADIUS requests to AAA.
+
+For framed route-based users, AAA extracts MSISDN and APN from AVPs and constructs the user identity. It then validates username and password.
+
+For router-based users, AAA extracts the username (removing domain if present) and validates it directly against stored credentials.
+
+Upon successful authentication, AAA responds with routing attributes such as:
+
+* VRF name  
+* Loopback name  
+* Framed-IP  
+* Framed-Route  
+* QoS templates  
+* Sub-template rules  
+
+These attributes are sent using vendor-specific AVPs depending on the NAS device.
+
+Accounting requests (Tunnel-Link Start/Stop) are sent to AAA and recorded as CDR/EDR entries.
+
+These records are stored in flat files and shared with BI systems daily via SFTP.
+
+The system does not maintain online sessions for enterprise users except for LTE-specific scenarios.
+
+The architecture ensures separation between provisioning, authentication, and accounting layers.
+
+It also supports high scalability and integration with multiple network vendors.
+
+Overall, the architecture enables real-time provisioning, secure authentication, and accurate usage tracking.
