@@ -1,0 +1,26 @@
+= Overview
+
+
+The GuestNet Authentication System is a RADIUS-based captive portal solution designed to manage guest WiFi access using PIN-based authentication.
+
+The system is implemented as a custom Radiator module (`AuthGUESTNET.pm`) that handles both authentication and accounting operations for guest users connecting to public or enterprise WiFi networks.
+
+Guest users are provisioned with temporary credentials (PIN and password), which are validated during authentication. The system ensures controlled access by enforcing location-based restrictions, package policies, and session limits.
+
+The module integrates with a backend MySQL database to store user accounts, session data, package definitions, and location mappings. It also maintains an in-memory cache to optimize performance and reduce database load.
+
+Authentication requests are processed through the RADIUS Access-Request flow, where user credentials, IP address, and location information are validated before granting access.
+
+The system supports dynamic location detection using both Layer 2 (circuit-id) and Layer 3 (IP-based) mechanisms, ensuring accurate mapping of users to physical WiFi locations.
+
+GuestNet also supports multiple package types that define session duration, validity period, idle timeout, and concurrency limits.
+
+Accounting functionality is fully supported through Start, Interim (Alive), and Stop events. These events track session usage, update time quotas, and generate detailed CDR records.
+
+The system ensures accurate session tracking using the RADONLINE table, which maintains active session data in real time.
+
+Upon session termination, usage data is written to CDR and CDRS tables for reporting and analytics.
+
+The Class attribute is used to carry session metadata across authentication and accounting stages, enabling consistent tracking of user, location, and package information.
+
+Overall, GuestNet provides a scalable, efficient, and policy-driven solution for managing guest WiFi access with strong control over authentication, session usage, and reporting.

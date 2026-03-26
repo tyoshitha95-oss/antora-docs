@@ -1,0 +1,29 @@
+= Security Features
+
+GuestNet implements multiple security mechanisms to protect network access.
+
+Authentication is based on secure PIN and password validation.
+
+Master password support allows administrative override.
+
+Location-based validation ensures users connect from authorized locations.
+
+Package-to-location mapping prevents misuse of access credentials.
+
+Concurrency limits prevent account sharing.
+
+Session timeouts ensure automatic disconnection of inactive users.
+
+Class attribute ensures secure metadata transfer between authentication and accounting.
+
+Database access is controlled through secure queries.
+
+User credentials are validated before granting access.
+
+Accounting logs provide audit trails for user activity.
+
+MAC address tracking enhances user identification.
+
+Termination reasons are logged for security analysis.
+
+These features ensure controlled and secure guest network access.

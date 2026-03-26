@@ -1,0 +1,35 @@
+= Error Handling
+
+
+The GuestNet system implements error handling at multiple stages of authentication and accounting.
+
+Common authentication failures include:
+
+* Invalid username or password
+* Package not allowed for location
+* Maximum session limit exceeded
+* Account inactive or expired
+* Session quota exhausted
+
+
+If the ACCOUNT record is not found, authentication fails immediately.
+
+Password validation ensures that incorrect credentials are rejected.
+
+If the user’s package is not mapped to the detected location, access is denied.
+
+Concurrency errors occur when active sessions exceed allowed limits.
+
+Time-based validation checks ensure that expired or inactive accounts are rejected.
+
+During accounting, errors may occur if session records are missing or inconsistent.
+
+The system handles missing records by initializing default values.
+
+Delta calculations prevent incorrect usage updates.
+
+Database failures may affect session tracking and quota updates.
+
+Logging is used extensively to track errors and debug issues.
+
+Proper validation ensures system stability and prevents unauthorized access.

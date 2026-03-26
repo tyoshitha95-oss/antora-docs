@@ -94,6 +94,27 @@
 
 
 
+** xref:Dialog/GuestNet/index4.adoc[GuestNet]
+
+*** xref:Dialog/GuestNet/overview4.adoc[Overview]
+
+*** xref:Dialog/GuestNet/architecture4.adoc[System Architecture]
+
+*** xref:Dialog/GuestNet/core4.adoc[Core Function Analysis]
+
+*** xref:Dialog/GuestNet/config4.adoc[Key Configuration Parameters]
+
+*** xref:Dialog/GuestNet/error4.adoc[Error Handling]
+
+*** xref:Dialog/GuestNet/performance4.adoc[Performance Consideration]
+
+*** xref:Dialog/GuestNet/security4.adoc[Security Features]
+
+*** xref:Dialog/GuestNet/monitoring4.adoc[Monitoring and Troubleshooting]
+
+
+
+
 ** xref:Dialog/LTE/index4.adoc[LTE]
 
 *** xref:Dialog/LTE/overview4.adoc[Overview]
@@ -136,46 +157,6 @@
 **** xref:Dialog/LTE/database-monitoring-queries4.adoc[Database Monitoring Queries]
 
 
-** xref:Dialog/GuestNet/index3.adoc[GuestNet]
-
-*** xref:Dialog/GuestNet/overview3.adoc[Overview]
-
-*** System Architecture
-**** xref:Dialog/GuestNet/core-components3.adoc[Core Components]
-**** xref:Dialog/GuestNet/database-tools3.adoc[Database Tools]
-
-*** Core Function Analysis
-**** xref:Dialog/GuestNet/main-entry-point3.adoc[Main Entry Point]
-**** xref:Dialog/GuestNet/authentication-handler3.adoc[Authentication Handler]
-**** xref:Dialog/GuestNet/location-resolution3.adoc[Location Resolution]
-**** xref:Dialog/GuestNet/time-restriction3.adoc[Time Restriction]
-**** xref:Dialog/GuestNet/accounting-handlers3.adoc[Accounting Handlers]
-
-*** Scenarios Analysis
-**** xref:Dialog/GuestNet/scenario-1-5(3).adoc[Scenario 1 - 5]
-**** xref:Dialog/GuestNet/scenario-6-10(3).adoc[Scenario 6 - 10]
-**** xref:Dialog/GuestNet/scenario-11-15(3).adoc[Scenario 11 - 15]
-
-*** Key Configuration Parameters
-**** xref:Dialog/GuestNet/time-calculations3.adoc[Time Calculations]
-**** xref:Dialog/GuestNet/session-management3.adoc[Session Management]
-**** xref:Dialog/GuestNet/fup3.adoc[FUP (Fair Usage Policy)]
-
-*** Error Handling
-**** xref:Dialog/GuestNet/logging-levels3.adoc[Logging Levels]
-**** xref:Dialog/GuestNet/common-error-scenarios3.adoc[Common Error Scenarios]
-
-*** Performance Consideration
-**** xref:Dialog/GuestNet/database-optimization3.adoc[Database Optimization]
-**** xref:Dialog/GuestNet/session-management-perf3.adoc[Session Management Performance]
-
-*** Security Features
-**** xref:Dialog/GuestNet/input-validation3.adoc[Input Validation]
-**** xref:Dialog/GuestNet/access-control3.adoc[Access Control]
-
-*** Monitoring and Troubleshooting
-**** xref:Dialog/GuestNet/key-log-messages3.adoc[Key Log Messages]
-**** xref:Dialog/GuestNet/database-monitoring-queries3.adoc[Database Monitoring Queries]
 
 ---
 
