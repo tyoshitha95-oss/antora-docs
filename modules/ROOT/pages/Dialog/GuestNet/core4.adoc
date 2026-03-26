@@ -1,0 +1,45 @@
+= Core Function Analysis
+
+The GuestNet system processes RADIUS requests through a central handler function called handle_request.
+
+This function routes requests based on their type:
+
+* Access-Request → AuthUser (Authentication)
+* Accounting-Start → AcctStart
+* Accounting-Alive → AcctAlive
+* Accounting-Stop → AcctStop
+
+During authentication, the AuthUser function performs multiple validation steps.
+
+First, it loads cached data using loadCache to avoid repeated database queries.
+
+Then, it extracts user credentials, IP address, and resolves the user location using getLocation2.
+
+The system queries the ACCOUNT table to validate the user’s PIN and password.
+
+If the password matches or a master password is used, the process continues.
+
+Next, the system checks whether the user’s assigned package is allowed at the detected location.
+
+Concurrency is validated by checking active sessions in the RADONLINE table.
+
+The system ensures that the user has not exceeded the maximum allowed sessions.
+
+It also verifies account status, first login conditions, and expiration rules.
+
+Session timeout is calculated based on package type, validity period, and time quota.
+
+If all validations pass, the system sends an Access-Accept response with attributes such as:
+
+* Session-Timeout
+* Idle-Timeout
+* Class attribute
+* Service-Info and Account-Info
+
+Accounting functions update session usage:
+
+* AcctStart → creates session record
+* AcctAlive → updates usage incrementally
+* AcctStop → finalizes session and writes CDR
+
+This flow ensures accurate authentication, session control, and usage tracking.

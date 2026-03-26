@@ -1,7 +1,7 @@
 = Overview
 
 
-The GuestNet (GUESTNET) Authentication System is a RADIUS-based captive portal solution designed to manage guest WiFi access using PIN-based authentication.
+The GuestNet Authentication System is a RADIUS-based captive portal solution designed to manage guest WiFi access using PIN-based authentication.
 
 The system is implemented as a custom Radiator module (`AuthGUESTNET.pm`) that handles both authentication and accounting operations for guest users connecting to public or enterprise WiFi networks.
 
