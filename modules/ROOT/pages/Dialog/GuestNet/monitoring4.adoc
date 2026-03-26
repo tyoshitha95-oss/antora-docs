@@ -1,0 +1,39 @@
+= Monitoring and Troubleshooting
+
+Monitoring in GuestNet focuses on session tracking and authentication logs.
+
+The RADONLINE table provides real-time view of active sessions.
+
+CDR and CDRS tables provide historical session data.
+
+Key fields to monitor include:
+
+* USERNAME
+* FRAMED-IP
+* SESSIONTIME
+* DOWNLOAD and UPLOAD usage
+* LOCATION ID
+
+Authentication logs help identify failed login attempts.
+
+Common troubleshooting steps:
+
+1. Verify user credentials
+2. Check package assignment
+3. Validate location mapping
+4. Confirm session limits
+5. Review accounting logs
+
+Missing session records may indicate accounting issues.
+
+Incorrect usage data may result from failed interim updates.
+
+Check database connectivity for query failures.
+
+Ensure proper parsing of Class attribute.
+
+Verify circuit-id and IP mapping for location detection.
+
+Logs provide detailed insights for debugging issues.
+
+Proper monitoring ensures system reliability and quick issue resolution.
