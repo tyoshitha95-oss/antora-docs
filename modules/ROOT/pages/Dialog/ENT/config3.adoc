@@ -1,0 +1,54 @@
+= Key Configuration Parameters
+
+Enterprise provisioning requires several key parameters for authentication and routing.
+
+Core parameters include:
+
+* UserId – Unique identifier for subscriber  
+* Password – Authentication credential  
+* MSISDN – Mobile number  
+* APN – Access Point Name  
+* Groupname – Defines user category (ENT1, ENT2)  
+* Barring Status – Indicates active or barred state  
+
+Routing parameters include:
+
+* VRF Name – Defines routing context  
+* Loopback Name – Used for routing identification  
+* Framed-IP – Assigned IP address  
+* Framed-Route – Routing paths (multiple values allowed)  
+
+QoS parameters include:
+
+* Input QoS Template  
+* Output QoS Template  
+
+Security and filtering:
+
+* Sub Template – Firewall rules  
+
+Other parameters:
+
+* Notes – User description field  
+
+Important behaviors:
+
+* Multiple framed routes are sent as separate AVPs  
+* QoS templates control bandwidth and traffic shaping  
+* Sub-template defines security policies  
+
+Parameters vary slightly between framed route and router-based solutions.
+
+Framed route uses MSISDN+APN as identifier.
+
+Router-based uses username only.
+
+Expiry date is not required for enterprise users.
+
+Proper parameter configuration ensures correct authentication and routing.
+
+Incorrect parameters may result in authentication failure or incorrect routing.
+
+All parameters are provisioned via CRM API calls.
+
+These parameters are critical for maintaining service quality and network stability.
