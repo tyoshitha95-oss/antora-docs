@@ -106,47 +106,24 @@
 
 
 
+** xref:Dialog/LTE/index5.adoc[GuestNet]
 
-** xref:Dialog/LTE/index4.adoc[LTE]
+*** xref:Dialog/LTE/overview5.adoc[Overview]
 
-*** xref:Dialog/LTE/overview4.adoc[Overview]
+*** xref:Dialog/LTE/architecture5.adoc[System Architecture]
 
-*** System Architecture
-**** xref:Dialog/LTE/core-components4.adoc[Core Components]
-**** xref:Dialog/LTE/database-tools4.adoc[Database Tools]
+*** xref:Dialog/LTE/core5.adoc[Core Function Analysis]
 
-*** Core Function Analysis
-**** xref:Dialog/LTE/main-entry-point4.adoc[Main Entry Point]
-**** xref:Dialog/LTE/authentication-handler4.adoc[Authentication Handler]
-**** xref:Dialog/LTE/location-resolution4.adoc[Location Resolution]
-**** xref:Dialog/LTE/time-restriction4.adoc[Time Restriction]
-**** xref:Dialog/LTE/accounting-handlers4.adoc[Accounting Handlers]
+*** xref:Dialog/LTE/config5.adoc[Key Configuration Parameters]
 
-*** Scenarios Analysis
-**** xref:Dialog/LTE/scenario-1-5(4).adoc[Scenario 1 - 5]
-**** xref:Dialog/LTE/scenario-6-10(4).adoc[Scenario 6 - 10]
-**** xref:Dialog/LTE/scenario-11-15(4).adoc[Scenario 11 - 15]
+*** xref:Dialog/LTE/error5.adoc[Error Handling]
 
-*** Key Configuration Parameters
-**** xref:Dialog/LTE/time-calculations4.adoc[Time Calculations]
-**** xref:Dialog/LTE/session-management4.adoc[Session Management]
-**** xref:Dialog/LTE/fup4.adoc[FUP (Fair Usage Policy)]
+*** xref:Dialog/LTE/performance5.adoc[Performance Consideration]
 
-*** Error Handling
-**** xref:Dialog/LTE/logging-levels4.adoc[Logging Levels]
-**** xref:Dialog/LTE/common-error-scenarios4.adoc[Common Error Scenarios]
+*** xref:Dialog/LTE/security5.adoc[Security Features]
 
-*** Performance Consideration
-**** xref:Dialog/LTE/database-optimization4.adoc[Database Optimization]
-**** xref:Dialog/LTE/session-management-perf4.adoc[Session Management Performance]
+*** xref:Dialog/LTE/monitoring5.adoc[Monitoring and Troubleshooting]
 
-*** Security Features
-**** xref:Dialog/LTE/input-validation4.adoc[Input Validation]
-**** xref:Dialog/LTE/access-control4.adoc[Access Control]
-
-*** Monitoring and Troubleshooting
-**** xref:Dialog/LTE/key-log-messages4.adoc[Key Log Messages]
-**** xref:Dialog/LTE/database-monitoring-queries4.adoc[Database Monitoring Queries]
 
 
 
