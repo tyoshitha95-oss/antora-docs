@@ -22,7 +22,6 @@
 **** xref:Dialog/Mac-Auth/accounting-handlers.adoc[Accounting Handlers]
 
 
-
 *** Key Configuration Parameters
 **** xref:Dialog/Mac-Auth/time-calculations.adoc[Time Calculations]
 **** xref:Dialog/Mac-Auth/session-management.adoc[Session Management]
@@ -83,13 +82,6 @@
 *** xref:Dialog/ENT/security3.adoc[Security Features]
 
 *** xref:Dialog/ENT/monitoring3.adoc[Monitoring and Troubleshooting]
-
-
-
-
-
-
-
 
 
 
