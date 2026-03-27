@@ -106,7 +106,7 @@
 
 
 
-** xref:Dialog/LTE/index5.adoc[GuestNet]
+** xref:Dialog/LTE/index5.adoc[LTE]
 
 *** xref:Dialog/LTE/overview5.adoc[Overview]
 
