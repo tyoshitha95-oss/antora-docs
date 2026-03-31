@@ -1,63 +1,265 @@
-= Core Function Analysis
+= Core Function Analysis - Enterprise (ENT)
+:toc: left
+:toclevels: 3
+:sectnums:
 
-The core functionality of AAA Enterprise system revolves around authentication and accounting mechanisms.
+== Overview
 
-=== Router-Based Solution
+The Enterprise (ENT) AAA system focuses on core authentication, IP assignment, and subscriber provisioning using RADIUS. This section describes the essential functional components: Router-Based Authentication, Framed Address Handling, RADIUS Processing, and Provisioning Flow.
 
-In router-based authentication, enterprise users are authenticated using username and password configured on routers.
+== RADIUS Process
 
-The authentication request contains a username with domain format (e.g., user@domain).
+The system uses RADIUS protocol for authentication and accounting between the router (NAS) and AAA server.
 
-AAA removes the domain part and validates the username and password against the database.
+=== Authentication Flow
 
-If credentials match and the user is not barred, AAA sends an Access-Accept response.
+[source,unlang]
+----
+sequenceDiagram
+    participant Router
+    participant AAA
+    participant DB
 
-Otherwise, it sends Access-Reject.
+    Router->>AAA: Access-Request
+    AAA->>DB: Validate User
+    DB-->>AAA: Result
+    AAA->>Router: Access-Accept / Reject
+----
 
-Routing attributes such as VRF, Loopback, and Framed-IP are included in the response.
+=== Accounting Flow
 
-Accounting is performed using Tunnel-Link Start and Stop messages, generating CDR records.
+[source,unlang]
+----
+sequenceDiagram
+    participant Router
+    participant AAA
 
-=== Framed Address Scenarios
+    Router->>AAA: Accounting-Start
+    Router->>AAA: Accounting-Interim
+    Router->>AAA: Accounting-Stop
+----
 
-Different framed address behaviors are observed:
+=== Key Attributes
 
-1. Framed address from PGW/SMF (Authentication Only)  
-   - Used only during authentication  
-   - Requires Dialog to send required packets  
+* User-Name
+* User-Password
+* NAS-IP-Address
+* Framed-IP-Address
+* Session-Timeout
 
-2. Framed address from AAA (LNS)  
-   - AAA assigns framed IP  
-   - Pending due to missing data  
+== Router-Based Authentication
 
-3. Framed address from AAA (PGW/SMF)  
-   - Fully implemented  
-   - Works for both authentication and accounting  
+=== Flow Diagram
 
-4. Framed address sent by PGW/SMF  
-   - Fully operational  
-   - Verified for both authentication and accounting  
+[source,unlang]
+----
+flowchart LR
+    Router -->|Access-Request| AAA
+    AAA --> DB
+    AAA -->|Accept/Reject| Router
+----
 
-=== Parameter Behavior Logic
+=== Decision Logic
 
-[cols="1,1,2", options="header"]
-|===
-| DB | Request | Result
+[source,unlang]
+----
+flowchart TD
+    A[Request] --> B{User Exists?}
+    B -- No --> X[Reject]
+    B -- Yes --> C{Password Valid?}
+    C -- No --> X
+    C -- Yes --> D{Account Active?}
+    D -- No --> X
+    D -- Yes --> E[Accept]
+----
 
-| Yes | No  | DB value is returned
-| No  | Yes | Request value is returned
-| Yes | Yes | Request value takes priority
-| No  | No  | Error is returned
-|===
+=== Attribute-Level Details
 
-This defines how framed address is selected in responses.
+| Attribute | Description |
+|----------|------------|
+| Framed-IP-Address | Assigns user IP |
+| VRF-Name | Routing context |
+| Session-Timeout | Session duration |
 
-=== Accounting Behavior
+=== Failure Scenarios
 
-Accounting records are generated for successful sessions.
+* Invalid credentials → Reject
+* User not found → Reject
+* Account inactive → Reject
+* AAA timeout → Retry/Fail
 
-CDR files are created in a standard format and shared with BI systems.
+== Framed Address Handling
 
-Separate files can be generated based on user type using groupname.
+=== Flow Diagram
 
-Overall, the system ensures flexible authentication and consistent routing behavior.
+[source,unlang]
+----
+flowchart TD
+    A[Check IP] --> B{Request IP?}
+    B -- Yes --> R[Use Request]
+    B -- No --> C{DB IP?}
+    C -- Yes --> D[Use DB]
+    C -- No --> E{External IP?}
+    E -- Yes --> F[Use External]
+    E -- No --> G[Reject]
+----
+
+=== Decision Logic
+
+* Request IP takes priority
+* DB IP used if request absent
+* External IP used as fallback
+* Reject if none available
+
+=== Attribute-Level Details
+
+| Attribute | Description |
+|----------|------------|
+| Framed-IP-Address | Assigned IP |
+| Framed-Pool | Pool reference |
+| Framed-IP-Netmask | Subnet |
+
+=== Failure Scenarios
+
+* No IP available → Reject
+* Pool exhausted → Reject
+* Duplicate IP → Conflict
+
+== Provisioning Flow
+
+=== User Creation
+
+[source,unlang]
+----
+flowchart LR
+    Admin --> UI
+    UI --> API
+    API --> Validate[Validate Input]
+    Validate --> DB
+    DB --> Policy[Assign Policy/IP Pool]
+    Policy --> Activate[Set Status ACTIVE]
+    Activate --> Success
+----
+
+=== User Update
+
+[source,unlang]
+----
+flowchart LR
+    Admin --> UI
+    UI --> API
+    API --> Fetch[Fetch Existing User]
+    Fetch --> Modify[Update Attributes]
+    Modify --> DB
+    DB --> Apply[Apply on Next Session]
+----
+
+=== User Deletion
+
+[source,unlang]
+----
+flowchart LR
+    Admin --> UI
+    UI --> API
+    API --> DB
+    DB --> Remove[Delete User]
+    Remove --> Session[Terminate Active Session]
+----
+
+=== View Subscriber
+
+
+[source,unlang]
+----
+flowchart LR
+    Request --> API
+    API --> DB
+    DB --> Response[Return User Details]
+----
+
+=== Key Attributes
+
+* Username
+* Password
+* Framed-IP
+* Group
+* Status
+
+=== Failure Scenarios
+
+* Duplicate user → Reject
+* Invalid input → Error
+* DB failure → Operation failed
+
+== Session Lifecycle
+
+The Enterprise AAA system implicitly follows a session lifecycle through RADIUS authentication and accounting processes.
+
+=== Lifecycle Stages
+
+. Authentication → Access-Request / Access-Accept
+. Session Start → Accounting-Start
+. Active Session → Interim Updates
+. Session Termination → Accounting-Stop
+
+=== Example Flow
+
+[source,unlang]
+----
+sequenceDiagram
+    participant Router
+    participant AAA
+    participant DB
+
+    Router->>AAA: Access-Request
+    AAA->>DB: Validate User
+    AAA->>Router: Access-Accept
+    Router->>AAA: Accounting-Start
+    loop Active Session
+        Router->>AAA: Interim-Update
+    end
+    Router->>AAA: Accounting-Stop
+----
+
+=== Example SQL Representation
+
+Session data can be stored and tracked using a table structure like below:
+
+[source,sql]
+----
+CREATE TABLE user_sessions (
+    session_id VARCHAR(64) PRIMARY KEY,
+    username VARCHAR(64),
+    framed_ip VARCHAR(45),
+    start_time TIMESTAMP,
+    last_update TIMESTAMP,
+    stop_time TIMESTAMP,
+    input_octets BIGINT,
+    output_octets BIGINT,
+    status VARCHAR(20)
+);
+
+-- Insert on Accounting-Start
+INSERT INTO user_sessions (session_id, username, framed_ip, start_time, status)
+VALUES ('ABC123', 'user1', '10.0.0.10', NOW(), 'ACTIVE');
+
+-- Update on Interim-Update
+UPDATE user_sessions
+SET last_update = NOW(),
+    input_octets = input_octets + 5000,
+    output_octets = output_octets + 3000
+WHERE session_id = 'ABC123';
+
+-- Update on Accounting-Stop
+UPDATE user_sessions
+SET stop_time = NOW(),
+    status = 'TERMINATED'
+WHERE session_id = 'ABC123';
+----
+
+=== Purpose
+
+* Tracks active user sessions in real-time
+* Maintains usage data for billing and monitoring
+* Ensures session continuity even if stop packets are delayed
+
