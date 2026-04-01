@@ -10,6 +10,7 @@
   "dependencies": {
     "abort-controller": "^3.0.0",
     "argparse": "^2.0.1",
+    "asciidoctor-kroki": "^0.18.1",
     "asciidoctor-opal-runtime": "^0.3.3",
     "async-lock": "^1.4.1",
     "atomic-sleep": "^1.0.0",

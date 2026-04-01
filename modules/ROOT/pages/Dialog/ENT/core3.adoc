@@ -13,7 +13,7 @@ The system uses RADIUS protocol for authentication and accounting between the ro
 
 === Authentication Flow
 
-[source,unlang]
+[mermaid]
 ----
 sequenceDiagram
     participant Router
@@ -28,7 +28,7 @@ sequenceDiagram
 
 === Accounting Flow
 
-[source,unlang]
+[mermaid]
 ----
 sequenceDiagram
     participant Router
@@ -51,7 +51,7 @@ sequenceDiagram
 
 === Flow Diagram
 
-[source,unlang]
+[mermaid]
 ----
 flowchart LR
     Router -->|Access-Request| AAA
@@ -61,7 +61,7 @@ flowchart LR
 
 === Decision Logic
 
-[source,unlang]
+[mermaid]
 ----
 flowchart TD
     A[Request] --> B{User Exists?}
@@ -73,13 +73,19 @@ flowchart TD
     D -- Yes --> E[Accept]
 ----
 
-=== Attribute-Level Details
+[cols="1,2", options="header"]
+|===
+| Attribute | Description
 
-| Attribute | Description |
-|----------|------------|
-| Framed-IP-Address | Assigns user IP |
-| VRF-Name | Routing context |
-| Session-Timeout | Session duration |
+| Framed-IP-Address
+| Assigns user IP
+
+| VRF-Name
+| Routing context
+
+| Session-Timeout
+| Session duration
+|===
 
 === Failure Scenarios
 
@@ -92,7 +98,7 @@ flowchart TD
 
 === Flow Diagram
 
-[source,unlang]
+[mermaid]
 ----
 flowchart TD
     A[Check IP] --> B{Request IP?}
@@ -113,11 +119,14 @@ flowchart TD
 
 === Attribute-Level Details
 
-| Attribute | Description |
-|----------|------------|
-| Framed-IP-Address | Assigned IP |
-| Framed-Pool | Pool reference |
-| Framed-IP-Netmask | Subnet |
+[cols="1,2", options="header"]
+|===
+| Attribute | Description
+
+| Framed-IP-Address | Assigned IP
+| Framed-Pool       | Pool reference
+| Framed-IP-Netmask | Subnet
+|===
 
 === Failure Scenarios
 
@@ -129,7 +138,7 @@ flowchart TD
 
 === User Creation
 
-[source,unlang]
+[mermaid]
 ----
 flowchart LR
     Admin --> UI
@@ -141,9 +150,18 @@ flowchart LR
     Activate --> Success
 ----
 
+The user creation process begins when an administrator initiates the operation through the user interface (UI). The UI forwards the request to the backend API, which is responsible for handling business logic and processing.
+
+At the API level, the input data is validated to ensure all required fields are correctly provided and meet system constraints. This step helps prevent invalid or inconsistent data from being stored in the system.
+
+Once validation is successful, the processed data is stored in the database (DB). After storing the user information, the system assigns an appropriate policy or IP pool to the user based on predefined configurations.
+
+Following policy assignment, the user account is activated by updating its status to ACTIVE. Finally, the process completes successfully, indicating that the user has been created, configured, and is ready for use within the system.
+
+
 === User Update
 
-[source,unlang]
+[mermaid]
 ----
 flowchart LR
     Admin --> UI
@@ -151,12 +169,21 @@ flowchart LR
     API --> Fetch[Fetch Existing User]
     Fetch --> Modify[Update Attributes]
     Modify --> DB
-    DB --> Apply[Apply on Next Session]
+    DB --> Apply(Apply on next session)
 ----
+
+The user update process begins when an administrator initiates an update through the user interface (UI). The UI sends the update request to the backend API, which handles the processing logic.
+
+At the API level, the system first retrieves the existing user details from the database to ensure that updates are applied to the correct record. Once the user data is fetched, the administrator’s requested changes are applied by modifying the relevant attributes such as user credentials, policies, or assigned resources.
+
+After updating the necessary fields, the modified data is stored back in the database. These changes are not immediately enforced on active sessions; instead, they take effect during the user’s next session or reconnection.
+
+This ensures system stability by avoiding disruption to currently active sessions while still applying updated configurations moving forward.
+
 
 === User Deletion
 
-[source,unlang]
+[mermaid]
 ----
 flowchart LR
     Admin --> UI
@@ -166,10 +193,19 @@ flowchart LR
     Remove --> Session[Terminate Active Session]
 ----
 
+The user deletion process starts when an administrator initiates a deletion request through the user interface (UI). The UI forwards this request to the backend API, which is responsible for handling the operation.
+
+At the API level, the system interacts with the database to locate and remove the specified user record. Once the user is deleted from the database, the system ensures that any active sessions associated with that user are immediately terminated.
+
+Terminating active sessions is a critical step to enforce the deletion in real time, preventing the user from continuing to access the system with previously established connections.
+
+This process ensures that the user is completely removed from the system and no further access is permitted.
+
+
+
 === View Subscriber
 
-
-[source,unlang]
+[mermaid]
 ----
 flowchart LR
     Request --> API
@@ -177,11 +213,18 @@ flowchart LR
     DB --> Response[Return User Details]
 ----
 
+The subscriber view process begins when a request is initiated to retrieve user details. This request is sent to the backend API, which acts as the central processing layer.
+
+The API communicates with the database to fetch the relevant subscriber information based on the request parameters, such as user ID or username. The database returns the stored user details, including attributes like account status, assigned policies, and other related information.
+
+Once the data is retrieved, the API formats the response and sends it back to the requester. This enables administrators or systems to view accurate and up-to-date subscriber information for monitoring, management, or troubleshooting purposes.
+
+
 === Key Attributes
 
 * Username
 * Password
-* Framed-IP
+* Framed- IP
 * Group
 * Status
 
@@ -199,12 +242,12 @@ The Enterprise AAA system implicitly follows a session lifecycle through RADIUS 
 
 . Authentication → Access-Request / Access-Accept
 . Session Start → Accounting-Start
-. Active Session → Interim Updates
+. Active Session → Interim Update
 . Session Termination → Accounting-Stop
 
 === Example Flow
 
-[source,unlang]
+[mermaid]
 ----
 sequenceDiagram
     participant Router
