@@ -1,0 +1,33 @@
+= Initial Login Variables (`mac_auth_handle_initial_login`)
+
+== Overview
+Explains variables driving package resets, data tracking, and authorization loops gracefully.
+
+== Extracted Variables Tree
+
+----
+[Control-LocId (From Location Resolver)] 
+  └── [Tmp-String-0 (From Calling-Station-Id)]
+        ├── Control-UserExists (SQL Row Count)
+        └── Control-ElapsedTime (NOW - LASTRSTTIME)
+              └── Tmp-Integer-6 (Copy of Control-RstInterval mapping)
+
+[Control-ElapsedTime] -> Analyzes Quota State
+  ├── Control-ControlQT (Fetched DB TimeQuota)
+  └── Control-QV (Fetched DB VolumeQuota)
+        └── Control-AuthType (Dynamically evaluated outcome)
+----
+
+== Variable Breakdown
+
+* `Control-UserExists`: Evaluates `SELECT COUNT(*)` on `MACL2USERS`. Dictates whether it drops seamlessly to `initial_new` or evaluates limits.
+* `Control-AuthType`: A pseudo identifier set exclusively internal. Values:
+  * `initial_new`: Pushes the user to a new registration hook.
+  * `initial_reset`: Tells post-auth to refresh the database with total package values.
+  * `initial_reject`: Denies access firmly during intervals.
+  * `initial_fup`: Assigns "_H" logic strings.
+  * `initial_update`: Clean login.
+* `Control-ElapsedTime`: Maps `unix_timestamp(now()) - unix_timestamp(LASTRSTTIME)`.
+* `Tmp-Integer-6`: Holds `Control-RstInterval`. Unlang requires values be placed in distinct placeholders natively to evaluate expressions safely (`ElapsedTime >= Tmp-Integer-6`).
+* `Control-QV` / `Control-ControlQT`: Holds values extracted by specific MAC and LOCID. Determines `AuthType` natively.
+* `Tmp-Integer-8`: Evaluated constraint buffer carrying `Control-RestrictionTimeout` passed downstream from the timespan checker to explicitly throttle explicit Session timeouts.

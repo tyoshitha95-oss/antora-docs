@@ -1,0 +1,85 @@
+= Initial Login (`mac_auth_handle_initial_login`)
+
+== Overview
+The core responsibility of the initial login handler is to determine if a user exists, and if so, whether they are permitted to log in based on their *Reset Interval* schedule and remaining quotas.
+
+== Logical Flow
+
+A separate policy has been created to handle this requirement.
+
+. **Check User Existence**:
+  * Action: Queries `MACL2USERS` using the MAC Address and Location ID.
+  * *Result 0 (New User)*: Sets authorization type to explicitly generate a brand-new package based on the respective location package parameters.
+  * *Result > 0 (Existing User)*: Proceeds to evaluate time-lapses.
+
+[source,pseudocode]
+----
+UserExists = DB.Count(MAC, LocId)
+
+if UserExists == 0:
+    AuthType = "initial_new"
+    Load default Quotas
+----
+
+. **Elapsed Time Calculation**:
+  * Action: Retrieves the formula `NOW() - LASTRSTTIME` to determine seconds since the user's data package was last renewed.
+  
+[source,pseudocode]
+----
+Elapsed = NOW - LASTRSTTIME
+----
+
+. **Interval Analysis (`QTARSTINTERVAL`)**:
+  * *Condition 1: Elapsed Time >= Reset Interval*
+    * Behavior: The user's package cycle is completely exhausted. The system provisions them back to 100% full quotas, logging this internally as `initial_reset`.
+  * *Condition 2: Elapsed Time < Reset Interval*
+    * Behavior: The user is still within their billing block. It assesses the precise existing `TimeQuota` and `VolumeQuota` directly from the database table.
+    * *Sub-Condition A (Time exhausted)*: If `TimeQuota == 0`, immediately flags `initial_reject`.
+    * *Sub-Condition B (Volume exhausted but Time available)*: If `VolumeQuota == 0` but `TimeQuota > 0`, flags `initial_fup` explicitly, forcing the user into a slower Fair Usage constraint.
+    * *Sub-Condition C (Everything available)*: Normal behavior, flags `initial_update`.
+
+[source,pseudocode]
+----
+if Elapsed >= ResetInterval:
+        AuthType = "initial_reset"
+        Load default Quotas (New Package)
+
+    else:
+        RemainingTime = DB.GetTimeQuota()
+        RemainingVol  = DB.GetVolumeQuota()
+
+        if RemainingTime == 0:
+            AuthType = "initial_reject"
+
+        else if RemainingVol == 0:
+            AuthType = "initial_fup"
+            FUP = "_H"
+
+        else:
+            AuthType = "initial_update"
+----
+    
+. **Timespan Cap Enforcement**:
+  * If a user requests connection and their `TimeQuota` exceeds the maximum allowability based on the specific calendar `TIMESPAN` limitation, their *in-session* `TimeQuota` is dynamically pulled backward to match the strict `RestrictionTimeout`.
+  
+[source,pseudocode]
+----
+if TimeQuota > TimespanTimeout:
+    TimeQuota = TimespanTimeout
+----
+
+. **Reply Generation**:
+  * Evaluates the service requests (`Service-Info`). Service auth packets will explicitly return calculated values. Pure MAC authentications hardcode standard lengths (e.g., a Session Timeout of 3600 seconds and Idle Timeout of 1800).
+
+[source,pseudocode]
+----
+// Build Reply logic conditionally based on FUP or Normal modes
+
+// Build Reply logic conditionally based on FUP or Normal modes
+if AuthType == "initial_reject":
+    Pass
+else if AuthType == "initial_reset":
+    Session-Timeout = TimeQuota
+    Huawei-Remanent-Volume = VolumeQuota
+    // ...
+----

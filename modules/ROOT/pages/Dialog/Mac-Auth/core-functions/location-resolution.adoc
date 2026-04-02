@@ -1,0 +1,46 @@
+= Location Resolution (`mac_auth_get_location` & `mac_auth_parse_remote_circuit`)
+
+== Overview
+Location identification fundamentally dictates package assignment. The system parses opaque strings injected by the BNG (such as `Agent-Remote-Id`, `Agent-Circuit-Id`, or Option 82 fields) to deduce exactly which network segment the MAC address originates from.
+
+== Logical Flow
+
+=== Parsing the Remote Circuit (`mac_auth_parse_remote_circuit`)
+The BNG normally forwards the physical line characteristics inside attributes like `Huawei-Vlan-ID` or `Agent-Remote-Id`.
+
+. The logic intercepts these attributes.
+. It strips trailing spaces or formatting artifacts safely using regex.
+. It maps the parsed hardware signature to a clean internal `Tmp-String` for DB checks.
+
+=== Resolving the Location (`mac_auth_get_location`)
+With a formulated identifier (e.g., VLAN or Remote ID), the policy explicitly asks the database for boundary configurations.
+
+. Queries `LOCTOPACKAGE` to find the exact geographic or logically defined boundaries.
+. Pulls back:
+  * `LocId` (Unique Location ID)
+  * `LocVolumeQuota` (Global fair-usage cap applied against the entire location segment)
+  * `LocVolumeQuotaCDR` (Current consumed cap of the location)
+  * `PkgId` (The default service package assigned to users standing in this location)
+  * `TimeQuota`, `VolumeQuota`, `RstInterval` (The raw blueprint rules defining the package).
+  * `Timespan` (When this location is legally accessible).
+
+== Pseudocode
+[source,pseudocode]
+----
+// Parse Remote Circuit
+RawSignature = Request.Agent-Remote-Id
+ParsedSignature = Regex.Strip(RawSignature)
+
+// Get Location
+LocationData = DB.Query("SELECT LocId, TimeQuota, VolumeQuota, Timespan, PkgId 
+                         FROM LOCTOPACKAGE WHERE RemoteId = ParsedSignature")
+
+if LocationData is empty:
+    // Location not configured in system
+    Fail and Reject Request
+else:
+    Control.LocId = LocationData.LocId
+    Control.TimeQuota = LocationData.TimeQuota
+    Control.Timespan = LocationData.Timespan
+    Control.PkgId = LocationData.PkgId
+----

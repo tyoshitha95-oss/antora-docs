@@ -1,0 +1,25 @@
+= Accounting Variables Reference (`mac_auth_handle_acct_stop`)
+
+== Overview
+Accounting heavily isolates internal values away from explicit SQL query calls. It maps strictly bounded deltas from native accounting `Stop` attributes.
+
+== Extracted Variables Tree
+
+----
+[Acct-Session-Time (BNG Request)]
+  ├── Control-OldQT (Cache lookup)
+  └── Tmp-Integer-6 (Clone for logic check)
+        └── Control-QTDiff (Total Session Limit) -> Database Deduct
+
+[Acct-Input-Octets] + [Acct-Output-Octets]
+  └── Control-TotalVolume (Summed Bytes Array)
+        ├── Control-OldQV (Cache Lookup)
+        └── Control-QVDiff (Total Vol Delta Limit) -> Database Deduct
+----
+
+== Variable Breakdown
+
+* `Control-OldQT` & `Control-OldQV`: Caches current interim values remaining globally tracking across `L2RADONLINE`. Derived completely differently in accounting blocks natively pulling straight arrays from `ACCTSESSIONID`.
+* `Tmp-Integer-6`: Secures Unlang safe comparisons logic bound checking. 
+* `Control-TotalVolume`: A dynamic computational sum (`expr: Input + Output`). 
+* `Control-QTDiff` / `Control-QVDiff`: The overarching differential element actually extracted and logged cleanly into `MACL2CDR` arrays maintaining structural sync mapping directly cleanly. Evaluated as exactly zero if an inherent limit check bounces natively identifying identical underlying service queue hooks safely bouncing the penalty array implicitly.

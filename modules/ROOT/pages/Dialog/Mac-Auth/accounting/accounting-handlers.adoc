@@ -1,0 +1,28 @@
+= Accounting Handlers
+
+== Overview
+Accounting hooks parse the finality of BNG records. While `authorize` is the gatekeeper and `post-auth` is the concurrent accountant, `accounting` handles session cleanup.
+
+== Standard Operations
+
+The native accounting system triggers on `Acct-Status-Type`:
+
+. **Start**:
+  * Pushed exclusively to log the live session. Triggered securely to `sql_mac_auth1`. Updates global class identifiers properly.
+. **Alive** (Interims):
+  * Maintains the alive timestamp. Handled smoothly through basic `sql_mac_auth1` caching.
+. **Stop**:
+  * Offloaded entirely to `mac_auth_handle_acct_stop` to untangle complex delta logic.
+
+== The Service Identifier Check
+To prevent accounting logic from doubling or overriding parameters, it establishes variables for deep queries (`Tmp-String-5` carrying `LocId`).
+
+[source,pseudocode]
+----
+if Status == Start:
+    DB.WriteStart();
+else if Status == Stop:
+    HandleAcctStop();
+else if Status == Alive:
+    DB.WriteAlive();
+----

@@ -1,0 +1,26 @@
+= TC-06: Time Restriction Check
+
+== Description
+Verifies timespan bounds effectively closing the session gracefully linearly.
+
+== Input Packet (Mock)
+[source,pseudocode]
+----
+Access-Request {
+    User-Name = "aabb.ccdd.eeff"
+}
+----
+
+== Condition States
+* User connects at `11:00 PM` on a `Sunday`. 
+* Location limits: `1-5:3600-7200` (Monday-Friday logic only).
+
+== Expected Outcome
+. **Internal Routing**: `RestrictionOk` remains `no`. 
+. **Network Package**:
+[source,pseudocode]
+----
+Access-Reject {
+    Reply-Message = "Access outside permitted time window"
+}
+----

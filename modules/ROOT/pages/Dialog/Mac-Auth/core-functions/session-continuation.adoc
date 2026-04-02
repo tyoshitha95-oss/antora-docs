@@ -1,0 +1,64 @@
+= Session Continuation (`mac_auth_handle_session_continuation`)
+
+== Overview
+The Session Continuation policy manages active, running connections. When the BNG sends an accounting update or service-auth request containing cumulative data metrics, this policy separates the truly "new" initial data from ongoing usage deltas (chunks) to deduct quotas fairly.
+
+== Logical Flow
+In standard RADIUS, a `Session-Timeout` sent from the BNG often represents the total limit. However, the BNG sends **CUMULATIVE** byte values backward (`Huawei-Remanent-Volume` and `Session-Timeout`) to indicate how much the user *has consumed* or how much they have left.
+
+. **Session Identification**:
+  * Merges `NAS-Identifier` and `Acct-Session-Id` into a highly specific tracking string (`Control-SessionId`).
+  * Extracts the inbound volume/time from the request payload.
+  
+. **Baseline vs Delta Check**:
+  * Checks `MACL2USERS` to confirm the user genuinely exists. If they vanished from the DB unexpectedly, treats the request identically to `initial_login`.
+  * Fetches the previous recorded state (`OldQT`, `OldQV`) from `L2RADONLINE` caching.
+  
+. **The Evaluation**:
+  * *Condition A (Baseline Sync)*: If the inbound metrics are `0` and the old metrics are `0`, this is essentially the first establishing breath of the continuation framework. It does not deduct anything.
+  * *Condition B (Continuation)*: If the inbound values exceed `0`:
+    * *Time Delta*: Inbound `ControlQT` minus `OldQT`. Updates `QTDiff`.
+    * *Vol Delta*: Inbound `ControlQVBytes` minus `OldQV`. Updates `QVDiff`.
+    
+. **Delegation**:
+  * Sets the request type to `continuation`.
+  * Allows the flow to move freely directly to the Post-Auth block, which runs the destructive SQL deductions explicitly using `QTDiff` and `QVDiff`.
+
+== Pseudocode
+
+[source,pseudocode]
+----
+SessionId = NAS-Id + Acct-Session-Id
+
+InboundVolume = Request.Volume
+InboundTime = Request.Time
+
+UserExists = DB.Count(MAC, LocId)
+if not UserExists:
+    HandleInitialLogin()
+else:
+    OldTime = DB.GetL2RadOnline(LASTQT)
+    OldVolume = DB.GetL2RadOnline(LASTQV)
+    
+    if InboundTime == 0 and InboundVolume == 0 and OldTime == 0 and OldVolume == 0:
+        // Baseline established
+        HandleInitialLogin()
+    else if InboundTime == 0 and InboundVolume == 0:
+        // Service Auth Start
+        TimeDelta = 0
+        VolDelta = 0
+    else:
+        // Calculate Deltas
+        if InboundTime >= OldTime:
+            TimeDelta = InboundTime - OldTime
+        else:
+            TimeDelta = 0 // anomaly protection
+            
+        if InboundVolume >= OldVolume:
+            VolDelta = InboundVolume - OldVolume
+        else:
+            VolDelta = 0 // anomaly protection
+            
+    AuthType = "continuation"
+    // Leave actual deductions to post-auth
+----

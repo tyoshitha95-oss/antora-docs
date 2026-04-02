@@ -1,0 +1,229 @@
+= Scenarios 6–10 (Session Continuations)
+
+== Overview
+Continuation scenarios define how the system processes *active sessions* after initial authentication. These flows handle real-time quota tracking, delta calculations, and mid-session enforcement.
+
+---
+
+== Scenario 6: First Continuation Baseline
+
+* **Trigger**:
+** Service authentication (`Huawei-Service-Info = N...`)
+** `ControlQT = 0`, `ControlQV = 0`
+** `OldQT = 0`, `OldQV = 0`
+
+* **Process**: Identified as initial continuation handshake
+* **Outcome**:
+** Treated as baseline (no delta deduction)
+** Establishes tracking references for future calculations
+
+=== Request
+
+[source,pseudocode]
+----
+echo 'User-Name="5a8c.7816.5f24",Huawei-Service-Info="NPostpaid_12M_UD_VOL",Acct-Session-Id="CONT001",ControlQT=0,ControlQV=0' \
+| radclient -x localhost auth mysecret
+----
+
+=== Expected Response
+
+[source,pseudocode]
+----
+Access-Accept
+    Session-Timeout = 10800
+    Idle-Timeout    = 1800
+----
+
+=== Database State
+
+[source,sql]
+----
+SELECT USERNAME, OldQT, OldQV FROM MACL2USERS;
+----
+
+|===
+| USERNAME | OldQT | OldQV
+
+| 5a8c.7816.5f24
+| 0
+| 0
+|===
+
+---
+
+== Scenario 7: Standard Delta Continuation
+
+* **Trigger**: `ControlQT > OldQT`
+* **Process**:
+** Delta calculated → `QTDiff = ControlQT - OldQT`
+** Deduction applied to `TimeQuota`
+** `OldQT` updated to current value
+
+* **Outcome**:
+** Accurate quota tracking
+** Seamless session continuation
+
+=== Request
+
+[source,pseudocode]
+----
+echo 'User-Name="5a8c.7816.5f24",Acct-Session-Id="CONT002",ControlQT=3600,OldQT=1800' \
+| radclient -x localhost auth mysecret
+----
+
+=== Expected Response
+
+[source,pseudocode]
+----
+Access-Accept
+    Session-Timeout = 7200
+    Idle-Timeout    = 1800
+----
+
+=== Database State
+
+[source,sql]
+----
+SELECT USERNAME, TimeQuota, OldQT FROM MACL2USERS;
+----
+
+|===
+| USERNAME | TimeQuota | OldQT
+
+| 5a8c.7816.5f24
+| 7200
+| 3600
+|===
+
+---
+
+== Scenario 8: Mid-Session Time Exhaustion
+
+* **Trigger**: Delta reduces `TimeQuota → 0`
+* **Process**: Flags `continuation_reject`
+* **Outcome**:
+** Immediate session termination
+** BNG instructed to drop session
+
+=== Request
+
+[source,pseudocode]
+----
+echo 'User-Name="5a8c.7816.5f24",Acct-Session-Id="CONT003",ControlQT=10800,OldQT=9000' \
+| radclient -x localhost auth mysecret
+----
+
+=== Expected Response
+
+[source,pseudocode]
+----
+Access-Reject
+    Reply-Message = "Time quota exhausted during session."
+----
+
+=== Database State
+
+[source,sql]
+----
+SELECT USERNAME, TimeQuota FROM MACL2USERS;
+----
+
+|===
+| USERNAME | TimeQuota
+
+| 5a8c.7816.5f24
+| 0
+|===
+
+---
+
+== Scenario 9: Mid-Session Volume Exhaustion
+
+* **Trigger**:
+** `VolumeQuota → 0`
+** `TimeQuota > 0`
+
+* **Process**:
+** FUP transition is NOT allowed mid-session
+** Flags `continuation_reject`
+
+* **Outcome**:
+** Session forcibly terminated
+** User must reconnect to enter FUP flow (Scenario 4)
+
+=== Request
+
+[source,pseudocode]
+----
+echo 'User-Name="5a8c.7816.5f24",Acct-Session-Id="CONT004",ControlQV=314572800,OldQV=300000000' \
+| radclient -x localhost auth mysecret
+----
+
+=== Expected Response
+
+[source,pseudocode]
+----
+Access-Reject
+    Reply-Message = "Volume quota exhausted. Reconnect required."
+----
+
+=== Database State
+
+[source,sql]
+----
+SELECT USERNAME, VolumeQuota, TimeQuota FROM MACL2USERS;
+----
+
+|===
+| USERNAME | VolumeQuota | TimeQuota
+
+| 5a8c.7816.5f24
+| 0
+| 3600
+|===
+
+---
+
+== Scenario 10: FUP Continuation
+
+* **Trigger**: `Huawei-Service-Info = ..._H`
+* **Process**:
+** FUP mode enforced continuously
+** Payload capped at `1048576 KB` (1GB logical window)
+** No quota deduction applied to DB
+
+* **Outcome**:
+** Infinite volume access (rate-limited)
+** Controlled by time constraints only
+
+=== Request
+
+[source,pseudocode]
+----
+echo 'User-Name="5a8c.7816.5f24",Huawei-Service-Info="NPostpaid_12M_UD_VOL_H",Acct-Session-Id="CONT005"' \
+| radclient -x localhost auth mysecret
+----
+
+=== Expected Response
+
+[source,pseudocode]
+----
+Access-Accept
+    Session-Timeout = 3600
+    Huawei-Remanent-Volume = 1048576
+----
+
+=== Database State
+
+[source,sql]
+----
+SELECT USERNAME, TimeQuota, VolumeQuota FROM MACL2USERS;
+----
+
+|===
+| USERNAME | TimeQuota | VolumeQuota
+
+| 5a8c.7816.5f24
+| 3600
+| 0
+|===

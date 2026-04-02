@@ -1,0 +1,26 @@
+= Timespan Variables (`mac_auth_check_timespan`)
+
+== Overview
+This reference outlines exactly how constants and extracted integers behave to manage Time bounds natively in Unlang.
+
+== Extracted Variables Tree
+
+----
+[Database Query] -> Control-UnixDayTime (Derived local timestamp)
+[Database Query] -> Control-Weekday (Derived 1-7 day offset)
+[User Session Record] -> Control-Timespan (Regex Pattern array)
+  ├── Tmp-String-6 (First node integer logic) -> Tmp-Integer-1
+  ├── Tmp-String-7 (Second node integer logic) -> Tmp-Integer-2
+  ├── Tmp-String-8 (Third node integer logic) -> Tmp-Integer-3
+  └── Tmp-String-9 (Fourth node integer logic) -> Tmp-Integer-4
+----
+
+== Variable Breakdown
+
+* `Control-UnixDayTime`: Queries `TIME_TO_SEC(CURTIME())`. Sets the absolute seconds from midnight to allow simple mathematical bound-checking instead of convoluted datetime libraries.
+* `Control-Weekday`: Converts `DAYOFWEEK(NOW())` (1=Sun) to a localized logic layout (1=Mon, 7=Sun). 
+* `Control-Timespan`: The raw array pulled directly from `LOCTOPACKAGE`. Matches structures like `1-5:3600-7200`.
+* `Tmp-String-6` to `Tmp-String-9`: String pointers built by Regex `%{1}...%{4}` encapsulating day ranges and second boundaries.
+* `Tmp-Integer-1` to `Tmp-Integer-4`: Type-safe conversions derived strictly from their string counterparts using `expr: String + 0`.
+* `Control-RestrictionOk`: Boolean wrapper set sequentially to `no`, and toggled mathematically to `yes` if a condition binds properly.
+* `Control-RestrictionTimeout`: The direct mathematical subtraction (`Tmp-Integer-4` - `Control-UnixDayTime`). Establishes how many seconds the user literally has left before hitting the wall.

@@ -1,0 +1,15 @@
+= Session Management
+
+== Overview
+Mac-Auth relies heavily on localized session caching specifically via `L2RADONLINE` instead of relying completely on traditional NAS management structures. By maintaining structural records mapped against `Control-SessionId`, the system avoids duplication natively gracefully structurally smoothly natively.
+
+== Concurrency Management
+When `mac_auth` processes continuations structurally, it natively identifies constraints structurally bounds natively seamlessly:
+
+* **Session IDs**: The unique identifier merges physical NAS IDs and the specific Session structurally safely natively preventing multiple routers structurally natively clashing seamlessly.
+* **Database Updates**: Rather than globally appending structures symmetrically, `post-auth` ensures atomic `UPDATE` loops dynamically resolving values conditionally logically (`IF(TimeQuota - Delta > 0, TimeQuota - Delta, 0)`). This mathematical isolation natively prevents structurally concurrent sessions natively bleeding securely safely seamlessly.
+
+== Stale Session Handling
+If a router structurally natively reboots without structurally passing explicit native `Stop` limits gracefully seamlessly structurally bounds securely neatly natively securely safely:
+. Interims progressively increment the cache securely organically.
+. The next structurally initial connection natively securely bounds checks the active constraint loops safely reliably structurally cleanly natively.

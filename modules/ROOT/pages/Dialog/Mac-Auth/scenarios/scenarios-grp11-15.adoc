@@ -1,0 +1,169 @@
+= Scenarios 11–15 (Accounting & Edge Cases)
+
+== Overview
+These scenarios cover accounting flows and edge conditions that require strict validation, safe handling, and protection against inconsistencies in session tracking and quota calculations.
+
+---
+
+== Scenario 11: Anomaly Start Packets
+
+* **Trigger**: Accounting-Start received without prior authentication
+* **Process**:
+** System validates session against `L2RADONLINE`
+** Creates or updates session tracking entry
+* **Outcome**:
+** Session safely tracked
+** Prevents system inconsistencies or crashes
+
+=== Request
+
+[source,pseudocode]
+----
+echo 'User-Name="5a8c.7816.5f24",Acct-Status-Type=Start,Acct-Session-Id="ACCT001"' \
+| radclient -x localhost acct mysecret
+----
+
+=== Expected Behavior
+
+[source,pseudocode]
+----
+Accounting-Start processed
+Session entry created in L2RADONLINE
+----
+
+=== Database State
+
+[source,sql]
+----
+SELECT * FROM L2RADONLINE;
+----
+
+---
+
+== Scenario 12: Standard Accounting Stop
+
+* **Trigger**: Accounting-Stop with session usage data
+* **Process**:
+** `mac_auth_handle_acct_stop` calculates:
+*** `QTDiff = ControlQT - OldQT`
+*** `QVDiff = ControlQV - OldQV`
+** Updates user quotas
+** Removes session from active table
+* **Outcome**:
+** Final usage persisted to `MACL2USERS`
+** Session logged into `MACL2CDR`
+
+=== Request
+
+[source,pseudocode]
+----
+echo 'User-Name="5a8c.7816.5f24",Acct-Status-Type=Stop,Acct-Session-Time=3600,Acct-Input-Octets=1048576,Acct-Output-Octets=1048576' \
+| radclient -x localhost acct mysecret
+----
+
+=== Expected Behavior
+
+[source,pseudocode]
+----
+Accounting-Stop processed
+Quota updated
+Session removed from active list
+----
+
+=== Database State
+
+[source,sql]
+----
+SELECT * FROM MACL2CDR ORDER BY CreatedDate DESC LIMIT 1;
+----
+
+---
+
+== Scenario 13: Double Logging Protection
+
+* **Trigger**: Duplicate Accounting-Stop packets (main + QoS session)
+* **Process**:
+** Compare `Acct-Session-Id` and `Acct-Multi-Session-Id`
+** If mismatch → treat as mirrored session
+** Set `QTDiff = 0`
+* **Outcome**:
+** Prevents duplicate time deduction
+** Only volume processed if applicable
+
+=== Request
+
+[source,pseudocode]
+----
+echo 'User-Name="5a8c.7816.5f24",Acct-Status-Type=Stop,Acct-Session-Id="S1",Acct-Multi-Session-Id="M1"' \
+| radclient -x localhost acct mysecret
+----
+
+=== Expected Behavior
+
+[source,pseudocode]
+----
+Duplicate session detected
+Time deduction skipped (QTDiff = 0)
+Volume processed normally
+----
+
+---
+
+== Scenario 14: Timespan Boundary Cutoff
+
+* **Trigger**:
+** `Control-UnixDayTime` close to package boundary
+** Remaining time ≤ 300 seconds
+
+* **Process**:
+** Override standard quota logic
+** Apply `RestrictionTimeout`
+
+* **Outcome**:
+** Session-Timeout forced to boundary limit
+** User disconnected exactly at cutoff
+
+=== Request
+
+[source,pseudocode]
+----
+echo 'User-Name="5a8c.7816.5f24",Control-UnixDayTime=86300' \
+| radclient -x localhost auth mysecret
+----
+
+=== Expected Response
+
+[source,pseudocode]
+----
+Access-Accept
+    Session-Timeout = 300
+----
+
+---
+
+== Scenario 15: Invalid MAC Discard
+
+* **Trigger**: Malformed or invalid MAC address format
+* **Process**:
+** Regex validation in `authorize` fails
+** Request rejected early
+* **Outcome**:
+** Packet discarded
+** No DB interaction
+** No location mapping attempted
+
+=== Request
+
+[source,pseudocode]
+----
+echo 'User-Name="INVALID_MAC",Calling-Station-Id="XYZ123"' \
+| radclient -x localhost auth mysecret
+----
+
+=== Expected Response
+
+[source,pseudocode]
+----
+Access-Reject
+    Reply-Message = "Invalid MAC format"
+----

@@ -2,46 +2,52 @@
 
 ** xref:Dialog/Mac-Auth/index.adoc[Mac-Auth Documentation]
 
-*** xref:Dialog/Mac-Auth/overview.adoc[Overview]
+*** xref:Dialog/Mac-Auth/index.adoc[Overview]
 
-*** System Architecture
-**** xref:Dialog/Mac-Auth/core-components.adoc[Core Components]
-**** xref:Dialog/Mac-Auth/database-tools.adoc[Database Tools]
+*** xref:Dialog/Mac-Auth/architecture.adoc[System Architecture]
 
-*** Core Function Analysis
-**** xref:Dialog/Mac-Auth/main-entry-point.adoc[Main Entry Point]
-**** xref:Dialog/Mac-Auth/authentication-handler.adoc[Authentication Handler]
-***** xref:Dialog/Mac-Auth/initial.adoc[Initial Authentication]
-***** xref:Dialog/Mac-Auth/service.adoc[Service Authentication]
-***** Scenarios Analysis
-****** xref:Dialog/Mac-Auth/scenario-1-5.adoc[Scenario 1 - 5]
-****** xref:Dialog/Mac-Auth/scenario-6-10.adoc[Scenario 6 - 10]
-****** xref:Dialog/Mac-Auth/scenario-11-15.adoc[Scenario 11 - 15]
-***** xref:Dialog/Mac-Auth/location-resolution.adoc[Location Resolution]
-***** xref:Dialog/Mac-Auth/time-restriction.adoc[Time Restriction]
-**** xref:Dialog/Mac-Auth/accounting-handlers.adoc[Accounting Handlers]
+*** Core-Functions Analysis
+**** xref:Dialog/Mac-Auth/core-functions/main-entry-point.adoc[Main Entry Point]
+**** xref:Dialog/Mac-Auth/core-functions/initial-login.adoc[Initoal Login]
+**** xref:Dialog/Mac-Auth/core-functions/service-info.adoc[Service Authentication]
+**** xref:Dialog/Mac-Auth/core-functions/session-continuation.adoc[Session Continuation]
+**** xref:Dialog/Mac-Auth/core-functions/location-resolution.adoc[Location Resolution]
+**** xref:Dialog/Mac-Auth/core-functions/time-restriction.adoc[Time Restriction]
+**** xref:Dialog/Mac-Auth/core-functions/fup-adjustment.adoc[FUP Adjustment]
+**** xref:Dialog/Mac-Auth/core-functions/post-auth-processing.adoc[Post Auth Processing]
+
+*** Accounting
+**** xref:Dialog/Mac-Auth/accounting/accounting-handlers.adoc[Accounting Handlers]
+**** xref:Dialog/Mac-Auth/accounting/accounting-stop.adoc[Accounting Stop]
+
+*** Variable-References
+**** xref:Dialog/Mac-Auth/variable-reference/timespan.adoc[Timespan Variables]
+**** xref:Dialog/Mac-Auth/variable-reference/initial-login.adoc[Initial Login Variables]
+**** xref:Dialog/Mac-Auth/variable-reference/service-info.adoc[Service Infor Variables]
+**** xref:Dialog/Mac-Auth/variable-reference/accounting.adoc[Accounting Variables]
+
+*** Scenarios
+**** xref:Dialog/Mac-Auth/scenarios/scenarios-grp1-5.adoc[Scenarios 1-5]
+**** xref:Dialog/Mac-Auth/scenarios/scenarios-grp6-10.adoc[Scenarios 6-10]
+**** xref:Dialog/Mac-Auth/scenarios/scenarios-grp11-15.adoc[Scenarios 11-15]
+
+*** Management and Configuration
+**** xref:Dialog/Mac-Auth/management/time-calculations.adoc[Time Calculation]
+**** xref:Dialog/Mac-Auth/management/session-management.adoc[Session Management]
+**** xref:Dialog/Mac-Auth/management/error-handling.adoc[Error Handling]
+**** xref:Dialog/Mac-Auth/management/common-scenarios.adoc[Common Error Scenarios]
+**** xref:Dialog/Mac-Auth/management/performance-security.adoc[Performace and Security]
+
+*** Test-Cases
+**** xref:Dialog/Mac-Auth/test-cases/tc-01-new-user-auth.adoc[New User Authentication]
+**** xref:Dialog/Mac-Auth/test-cases/tc-02-returning-user-quota.adoc[Returning User Quota]
+**** xref:Dialog/Mac-Auth/test-cases/tc-03-exhausted-quota.adoc[Exhausted Quota Drop]
+**** xref:Dialog/Mac-Auth/test-cases/tc-04-invalid-mac-format.adoc[Invalid MAC Format]
+**** xref:Dialog/Mac-Auth/test-cases/tc-05-fup-continuation.adoc[FUP Continuation]
+**** xref:Dialog/Mac-Auth/test-cases/tc-06-time-restriction.adoc[Time Restriction Check]
 
 
 
-*** Key Configuration Parameters
-**** xref:Dialog/Mac-Auth/time-calculations.adoc[Time Calculations]
-**** xref:Dialog/Mac-Auth/session-management.adoc[Session Management]
-
-*** Error Handling
-**** xref:Dialog/Mac-Auth/logging-levels.adoc[Logging Levels]
-**** xref:Dialog/Mac-Auth/common-error-scenarios.adoc[Common Error Scenarios]
-
-*** Performance Consideration
-**** xref:Dialog/Mac-Auth/database-optimization.adoc[Database Optimization]
-**** xref:Dialog/Mac-Auth/session-management-perf.adoc[Session Management Performance]
-
-*** Security Features
-**** xref:Dialog/Mac-Auth/input-validation.adoc[Input Validation]
-**** xref:Dialog/Mac-Auth/access-control.adoc[Access Control]
-
-*** Monitoring and Troubleshooting
-**** xref:Dialog/Mac-Auth/key-log-messages.adoc[Key Log Messages]
-**** xref:Dialog/Mac-Auth/database-monitoring-queries.adoc[Database Monitoring Queries]
 
 
 ** xref:Dialog/gpon/index2.adoc[GPON]

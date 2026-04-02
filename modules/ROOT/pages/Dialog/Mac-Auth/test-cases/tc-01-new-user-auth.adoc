@@ -1,0 +1,32 @@
+= TC-01: New User Initial Authentication
+
+== Description
+Verifies behavior when a completely undiscovered MAC address invokes a connection.
+
+== Input Packet (Mock)
+[source,pseudocode]
+----
+Access-Request {
+    User-Name = "aabb.ccdd.eeff"
+    Calling-Station-Id = "aabb.ccdd.eeff"
+    NAS-Identifier = "BRAS-1"
+    Agent-Remote-Id = "VLAN_102"
+}
+----
+
+== Condition States
+* `MACL2USERS`: `0` rows match `aabb.ccdd.eeff`.
+* `LOCTOPACKAGE`: Remote ID `VLAN_102` maps to a package with `TimeQuota = 3600`, `VolumeQuota = 5000000`.
+
+== Expected Outcome
+. **Internal Routing**: Flags `initial_new`.
+. **Database Result**: Pushes `sql_mac_auth3` to insert the explicit arrays securely.
+. **Network Action**: Returns `Access-Accept`.
+. **Network Package**:
+[source,pseudocode]
+----
+Access-Accept {
+    Session-Timeout = 3600
+    Idle-Timeout = 1800
+}
+----

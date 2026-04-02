@@ -1,0 +1,224 @@
+= Scenarios 1–5 (Initial & FUP)
+
+== Overview
+These scenarios describe the complete connection lifecycle of a MAC-based user connecting through the BNG, covering initial onboarding, quota reset, normal usage, FUP enforcement, and rejection.
+
+---
+
+== Scenario 1: Brand New User
+
+* **Trigger**: MAC not found (`MACL2USERS` returns 0 rows)
+* **Process**: `mac_auth_handle_initial_login` → `initial_new`
+* **Outcome**:
+** New user inserted via `sql_mac_auth3`
+** Quotas assigned from `PkgId`
+** Access granted with default timeout
+
+=== Request
+
+[source,pseudocode]
+----
+echo 'User-Name="5a8c.7816.5f24",User-Password="mytest",NAS-IP-Address=10.174.157.1,Calling-Station-Id="5a:8c:78:16:5f:24"' \
+| radclient -x localhost:1912 auth mysecret
+----
+
+=== Expected Response
+
+[source,pseudocode]
+----
+Access-Accept
+    Session-Timeout = 3600
+    Idle-Timeout    = 1800
+    Huawei-Account-Info = "NPostpaid_12M_UD_VOL"
+----
+
+=== Database State
+
+[source,sql]
+----
+SELECT * FROM MACL2USERS;
+----
+
+|===
+| USERNAME | TimeQuota | VolumeQuota | STATUS | PKGID
+
+| 5a8c.7816.5f24
+| 10800
+| 314572800
+| 1
+| Postpaid_12M_UD_VOL
+|===
+
+---
+
+== Scenario 2: Returning User (Reset Window Passed)
+
+* **Trigger**: `NOW() - LASTRSTTIME >= QTARSTINTERVAL`
+* **Process**: `initial_reset`
+* **Outcome**:
+** Quotas reset to package maximum
+** `LASTRSTTIME` updated
+** User granted full access again
+
+=== Request
+
+[source,pseudocode]
+----
+echo 'User-Name="5a8c.7816.5f24",Acct-Session-Id="RESET001"' \
+| radclient -x localhost auth mysecret
+----
+
+=== Expected Response
+
+[source,pseudocode]
+----
+Access-Accept
+    Session-Timeout = 10800
+    Idle-Timeout    = 1800
+----
+
+=== Database State
+
+[source,sql]
+----
+SELECT USERNAME, TimeQuota, VolumeQuota, LASTRSTTIME FROM MACL2USERS;
+----
+
+|===
+| USERNAME | TimeQuota | VolumeQuota | LASTRSTTIME
+
+| 5a8c.7816.5f24
+| 10800
+| 314572800
+| NOW()
+|===
+
+---
+
+== Scenario 3: Returning User (Mid-Window, Good Quota)
+
+* **Trigger**: Within reset interval AND quotas available
+* **Process**: `initial_update`
+* **Outcome**:
+** `LASTLOGINTIME` updated
+** No quota reset
+** Normal access granted
+
+=== Request
+
+[source,pseudocode]
+----
+echo 'User-Name="5a8c.7816.5f24",Acct-Session-Id="MID001"' \
+| radclient -x localhost auth mysecret
+----
+
+=== Expected Response
+
+[source,pseudocode]
+----
+Access-Accept
+    Session-Timeout = 7200
+    Idle-Timeout    = 1800
+----
+
+=== Database State
+
+[source,sql]
+----
+SELECT USERNAME, TimeQuota, VolumeQuota, LASTLOGINTIME FROM MACL2USERS;
+----
+
+|===
+| USERNAME | TimeQuota | VolumeQuota | LASTLOGINTIME
+
+| 5a8c.7816.5f24
+| 7200
+| 204800000
+| NOW()
+|===
+
+---
+
+== Scenario 4: Fair Usage Policy (FUP Applied)
+
+* **Trigger**: Within interval AND `VolumeQuota = 0`
+* **Process**: `initial_fup`
+* **Outcome**:
+** FUP policy applied
+** QoS rate limiting enforced
+** Access allowed with restrictions
+
+=== Request
+
+[source,pseudocode]
+----
+echo 'User-Name="5a8c.7816.5f24",Acct-Session-Id="FUP001"' \
+| radclient -x localhost auth mysecret
+----
+
+=== Expected Response
+
+[source,pseudocode]
+----
+Access-Accept
+    Session-Timeout = 3600
+    Idle-Timeout    = 1800
+    Huawei-Account-Info = "FUP_POLICY"
+----
+
+=== Database State
+
+[source,sql]
+----
+SELECT USERNAME, TimeQuota, VolumeQuota FROM MACL2USERS;
+----
+
+|===
+| USERNAME | TimeQuota | VolumeQuota
+
+| 5a8c.7816.5f24
+| 3600
+| 0
+|===
+
+---
+
+== Scenario 5: Quota Exhaustion (Access Denied)
+
+* **Trigger**: `TimeQuota = 0`
+* **Process**: `initial_reject`
+* **Outcome**:
+** Access denied
+** Informational message returned
+** No DB modification
+
+=== Request
+
+[source,pseudocode]
+----
+echo 'User-Name="5a8c.7816.5f24",Acct-Session-Id="REJECT001"' \
+| radclient -x localhost auth mysecret
+----
+
+=== Expected Response
+
+[source,pseudocode]
+----
+Access-Reject
+    Reply-Message = "Time quota exhausted. Please wait for quota reset interval."
+----
+
+=== Database State
+
+[source,sql]
+----
+SELECT USERNAME, TimeQuota, VolumeQuota FROM MACL2USERS;
+----
+
+|===
+| USERNAME | TimeQuota | VolumeQuota
+
+| 5a8c.7816.5f24
+| 0
+| 1024000
+|===
