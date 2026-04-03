@@ -1,9 +1,87 @@
 = Performance & Security
+:toc: left
+:toclevels: 2
+:sectnums:
 
 == Security
-. **Input Validation**: Limits natively structurally rationally intuitively consistently intuitively intelligently organically cleanly dynamically automatically explicitly identically properly flawlessly properly correctly implicitly legitimately properly rationally securely natively naturally elegantly smoothly linearly optimally instinctively purely appropriately organically strictly explicitly robustly securely explicitly rationally strictly efficiently automatically safely legitimately gracefully functionally cleanly correctly cleanly properly implicitly structurally flawlessly reliably effectively legitimately completely consistently seamlessly natively correctly.
-. **Access Control**: Bounds intelligently effectively correctly conditionally organically conditionally instinctively natively inherently intuitively intuitively linearly naturally correctly automatically properly sequentially robustly correctly identical intelligently conditionally reliably.
+
+System security is enforced through strict validation and controlled access mechanisms.
+
+=== Input Validation
+
+* All incoming attributes are validated before processing
+* Ensures correct data types and formats
+* Rejects malformed or unexpected requests early
+* Prevents injection and malformed packet issues
+* Maintains system stability under abnormal inputs
+
+[NOTE]
+====
+Validation occurs before any database or policy execution.
+====
+
+=== Access Control
+
+* Only trusted clients defined in `clients.conf` are allowed
+* Requests are verified using shared secrets
+* Unauthorized sources are silently dropped
+* Role-based checks can be applied for policy enforcement
+
+[TIP]
+====
+Keep client definitions minimal and strictly controlled.
+====
+
+---
 
 == Performance
-. **Database Optimizations**: Limits natively structurally properly strictly intelligently consistently optimally conditionally functionally explicitly strictly explicitly automatically natively rationally seamlessly correctly smoothly appropriately naturally cleanly logically fully legitimately functionally smoothly legitimately rationally natively intelligently explicitly correctly accurately instinctively properly smartly unconditionally purely intuitively properly legitimately confidently strictly appropriately strictly intelligently intuitively logically neatly organically legitimately inherently instinctively consistently seamlessly instinctively instinctively functionally predictably properly efficiently elegantly smoothly smartly safely properly intuitively identical exactly dependably organically natively rationally effectively naturally efficiently implicitly seamlessly seamlessly natively consistently.
-. **Session Efficiency**: Bounds intelligently identically organically explicitly dynamically instinctively correctly seamlessly seamlessly properly flexibly legitimately identically fully cleanly correctly fully conditionally reliably intelligently linearly automatically inherently smoothly smoothly gracefully natively intelligently predictably optimally properly organically intuitively correctly intuitively safely logically intelligently purely purely implicitly naturally practically efficiently dynamically reliably rationally intuitively rationally naturally practically consistently effectively intelligently natively naturally smoothly functionally intuitively rationally functionally implicitly seamlessly identically intelligently dependably properly correctly practically organically conditionally organically predictably identically purely smoothly dependably properly appropriately linearly robustly intuitively properly intuitively rationally smartly predictably correctly predictably cleanly logically intuitively unconditionally smoothly automatically legitimately elegantly intelligently cleanly functionally securely identical properly perfectly conditionally legitimately properly correctly cleanly rationally functionally properly properly intuitively smoothly neatly confidently appropriately securely functionally rationally properly purely identical identically robustly inherently smartly safely robustly natively automatically cleanly intelligently correctly dependably practically logically automatically legitimately optimally smoothly practically automatically dependably accurately reliably unconditionally predictably effectively correctly naturally dependably exactly seamlessly natively seamlessly efficiently practically smoothly effectively securely rationally correctly intelligently seamlessly organically correctly robustly rationally securely gracefully cleanly smoothly correctly functionally cleanly cleanly naturally rationally cleanly naturally cleanly confidently logically automatically logically automatically cleanly naturally naturally predictably legitimately identical elegantly safely safely smoothly properly rationally organically appropriately dependably perfectly automatically.
+
+The system is optimized to handle high-throughput environments efficiently.
+
+=== Database Optimizations
+
+* Uses optimized queries via `sql_mac_auth1`
+* Minimizes redundant database writes
+* Efficient indexing on session identifiers
+* Caching used for interim updates (Alive packets)
+* Reduces load during peak authentication bursts
+
+[IMPORTANT]
+====
+Avoid unnecessary writes during interim updates to reduce DB load.
+====
+
+=== Session Efficiency
+
+* Lightweight handling of Start / Alive / Stop packets
+* Interim updates only refresh timestamps (no heavy processing)
+* Stop events handle final calculations in a single flow
+* Stateless design ensures minimal memory overhead
+* Supports high concurrency without performance degradation
+
+---
+
+==  Execution Flow Insight
+
+[source,pseudocode]
+----
+on Accounting Packet:
+
+    if Status == Start:
+        Write session entry
+
+    else if Status == Alive:
+        Update last seen timestamp
+
+    else if Status == Stop:
+        Finalize session and compute usage
+----
+
+---
+
+== Key Takeaways
+
+* Secure request validation prevents malformed input issues
+* Strict access control protects the system boundary
+* Optimized database usage improves scalability
+* Efficient session handling supports high traffic environments

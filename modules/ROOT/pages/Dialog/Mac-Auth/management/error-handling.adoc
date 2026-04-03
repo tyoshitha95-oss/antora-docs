@@ -1,12 +1,93 @@
 = Error Handling
+:toc: left
+:toclevels: 2
+:sectnums:
 
 == Overview
-By utilizing native Unlang constraints, errors resolve mathematically and silently drop malformed sessions cleanly mathematically logically naturally natively seamlessly natively gracefully safely explicitly compactly gracefully dynamically smoothly cleanly structurally flawlessly.
+
+Error handling is implemented using *native Unlang constraints* to ensure:
+
+* Invalid requests are safely ignored
+* Malformed sessions are dropped early
+* System stability is maintained without crashes
+* Processing remains lightweight and predictable
+
+[NOTE]
+====
+All error handling is designed to be *silent* to avoid unnecessary system overhead.
+====
+
+---
 
 == Handling Strategies
-. **Missing Variables**:
-  * Bound safely natively utilizing Unlang string interpolation bounds explicitly seamlessly conditionally naturally safely neatly (`%{%{Huawei-Service-Info}:-}`). Fallbacks guarantee `0` dynamically organically smoothly conditionally smoothly safely securely cleanly logically compactly neatly gracefully.
-. **Regex Boundaries**:
-  * Malformed strings natively cleanly drop organically effectively elegantly natively securely flawlessly gracefully sequentially seamlessly logically safely structurally seamlessly flawlessly unconditionally properly seamlessly flawlessly.
-. **Double Deductions**:
-  * Smooth checks implicitly seamlessly seamlessly natively completely bounds constraints gracefully dynamically intelligently completely completely organically intelligently unconditionally intelligently explicitly explicitly effectively dynamically explicitly natively compactly completely safely gracefully functionally appropriately optimally smartly.
+
+=== Missing Variables
+
+* Uses safe fallback expansion:
++
+[source,unlang]
+----
+%{%{Huawei-Service-Info}:-0}
+----
+
+* Prevents null or undefined attribute failures
+* Ensures default values are applied dynamically
+* Avoids breaking policy execution
+
+[TIP]
+====
+Always define fallback values for optional attributes.
+====
+
+---
+
+=== Regex Boundaries
+
+* Input strings are validated using strict regex patterns
+* Malformed or unexpected values are automatically rejected
+* Prevents incorrect parsing and downstream failures
+* Ensures only valid formats are processed
+
+[IMPORTANT]
+====
+Invalid regex matches result in immediate request drop.
+====
+
+---
+
+=== Double Deductions Prevention
+
+* Checks applied before quota or usage updates
+* Prevents duplicate accounting or billing calculations
+* Ensures idempotent processing of accounting packets
+* Maintains consistency across Start / Alive / Stop flows
+
+---
+
+== Error Handling Flow
+
+[source,pseudocode]
+----
+on request:
+
+    if missing required attribute:
+        apply default or skip safely
+
+    else if regex validation fails:
+        drop request
+
+    else if duplicate accounting detected:
+        ignore update
+
+    else:
+        process normally
+----
+
+---
+
+== Key Benefits
+
+* Robust handling of malformed inputs
+* Prevents system crashes and inconsistencies
+* Ensures predictable and stable execution
+* Supports high-volume environments efficiently
