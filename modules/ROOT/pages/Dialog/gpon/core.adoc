@@ -1,0 +1,141 @@
+= Core Function Analysis
+:toc: left
+:toclevels: 3
+:icons: font
+:sectnums:
+
+== Main Entry Point (`sites-available/gpon`)
+
+The main entry point defines the chronological execution of blocks. When a packet enters the GPON server block, it transits through the following core phases:
+
+. *Authorize*  
+Executes full packet logging, runs the `gpon_auth_policy`, and prepares the `chap` module for payload inspection.
+
+. *Authenticate*  
+Processes the prepared CHAP request. If the sub-module rejects the credentials, an explicit `Password Failure` message is assigned to the reply.
+
+. *Accounting*  
+Routes traffic through `gpon_auth_policy` (for parsing), `fttx_session`, and ultimately `gpon_accounting`.
+
+. *Post-Auth*  
+Executes session bounds and cleans up the reply stream by stripping internal `User-Name` variables to prevent leakage. Logs standard Reject/Challenge statuses.
+
+== Authentication Handler (`policy.d/gpon_auth_policy`)
+
+This policy serves as the critical gatekeeper for all GPON access requests.
+
+=== How It works
+
+Every time a user tries to connect, the policy runs through two stages:
+
+User tries to connect
+        │
+        ▼
+STAGE 1: Input Check  →  Is the username even valid?
+        │
+        ▼
+STAGE 2: Find in Database  →  Does this user exist?
+        │
+        ▼
+ACCEPT or REJECT
+
+=== Stage 1 - Input Checks (Is the username valid?)
+
+Before doing anything else, the policy ensures the request is properly formed. If anything is wrong, it rejects immediately.
+
+==== Check 1 — Required fields
+
+The request must include both a username and a password. If either is missing, it is rejected.
+
+REQUEST comes in
+    │
+    ├── Has "User-Name"?     → NO  →  REJECT "Missing User-Name"
+    ├── Has "CHAP-Password"? → NO  →  REJECT "Missing Password"
+    │
+    └── Both present?        →  Continue
+
+[source]
+----
+IF User-Name CONTAINS ' ':
+    REJECT "Invalid User-Name"
+
+IF User-Name != LOWERCASE(User-Name):
+    REJECT "User-Name must be lowercase"
+----
+
+==== Check 2 — Lowercase and no spaces
+
+Usernames must be all lowercase and must not contain spaces.
+
+ BAD:  "John Doe"  
+ BAD:  "John@isp.lk"  
+ GOOD: "john@isp.lk"  
+
+==== Check 3 — Single @ symbol
+
+[source]
+----
+IF User-Name HAS MORE THAN ONE '@':
+    REJECT "Multiple @ in User-Name"
+----
+
+==== Check 4 — No double dots
+
+[source]
+----
+IF User-Name CONTAINS '..':
+    REJECT "User-Name contains multiple dots"
+----
+
+==== Check 5 — Realm format
+
+[source]
+----
+IF '@' IS PRESENT AND realm DOES NOT MATCH pattern /@(.+)\.(.+)$/:
+    REJECT "Realm does not have at least one dot"
+
+IF User-Name ENDS WITH '.':
+    REJECT "Realm ends with a dot"
+
+IF realm STARTS WITH '.':
+    REJECT "Realm begins with a dot"
+----
+
+=== Stage 2 — Find the User in the Database
+
+Once the username passes validation, it is normalized and used for database lookup.
+
+==== Step 1 — Ensure @ symbol
+
+[source]
+----
+IF User-Name DOES NOT CONTAIN '@':
+    APPEND '@' to User-Name
+----
+
+==== Step 2 — Extract 9-digit service number
+
+[source]
+----
+IF local_part ENDS WITH 9 alphanumeric characters:
+    service_number = last 9 characters
+ELSE:
+    REJECT "Invalid username: No valid digits found"
+----
+
+==== Step 3 — Build database key
+
+[source]
+----
+User-Name = "94" + service_number
+----
+
+==== Step 4 — Database lookup
+
+[source]
+----
+IF Cleartext-Password NOT returned:
+    REJECT "User not found."
+ELSE:
+    ACCEPT
+----
