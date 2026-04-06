@@ -50,23 +50,17 @@
 
 
 
-** xref:Dialog/gpon/index2.adoc[GPON]
+** xref:Dialog/gpon/overview.adoc[GPON]
 
-*** xref:Dialog/gpon/overview2.adoc[Overview]
-
-*** xref:Dialog/gpon/architecture.adoc[System Architecture]
-
-*** xref:Dialog/gpon/core.adoc[Core Function Analysis]
-
-*** xref:Dialog/gpon/config.adoc[Key Configuration Parameters]
-
-*** xref:Dialog/gpon/error.adoc[Error Handling]
-
-*** xref:Dialog/gpon/performance.adoc[Performance Consideration]
-
-*** xref:Dialog/gpon/security.adoc[Security Features]
-
-*** xref:Dialog/gpon/monitoring.adoc[Monitoring and Troubleshooting]
+** xref:Dialog/gpon/architecture.adoc[System Architecture]
+** xref:Dialog/gpon/core.adoc[Core Function Analysis]
+** xref:Dialog/gpon/security.adoc[Security Features]
+** xref:Dialog/gpon/file.adoc[File & Variable Reference]
+** Test Cases
+*** xref:Dialog/gpon/testcases/ent.adoc[Enterprise VPN]
+*** xref:Dialog/gpon/testcases/private_dy.adoc[Private Dynamic]
+*** xref:Dialog/gpon/testcases/public_dy.adoc[Public Dynamic]
+*** xref:Dialog/gpon/testcases/public_st.adoc[Public Static With IPv6]
 
 
 

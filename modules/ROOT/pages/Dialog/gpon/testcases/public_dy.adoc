@@ -1,0 +1,114 @@
+= Public Dynamic Profile Test Case
+:toc: left
+:toclevels: 3
+:icons: font
+:sectnums:
+
+== Description
+Validates the authentication and assignment flow for a standard GPON subscriber dynamically assigned a public IP profile. The request is processed and dynamically provisioned by the backend APIs/Radius engine.
+
+== Configuration Mapping
+
+The following test case mapping demonstrates the specific parameters supplied to the AAA backend API:
+
+[cols="1,2", options="header"]
+|===
+| Parameter | Value
+
+| Endpoint ID
+| `94666543212`
+
+| Authentication Match
+| `MySecurePass123`
+
+| Assigned Group
+| `GPON`
+
+| customnumfield1
+| `150`
+
+| sessionlimit
+| `300`
+
+| barringstatus
+| `0` (Unbarred - Allowed)
+
+| status
+| `1` (Active)
+
+| Framed-Pool
+| `PUBLIC_DYNAMIC`
+|===
+
+== Test Implementation Request
+
+[source, bash]
+----
+curl --location --request PUT 'http://localhost:4000/users/94666543213' \
+--header 'Content-Type: application/x-www-form-urlencoded' \
+--header 'Authorization: ••••••' \
+--data-urlencode 'password=MySecurePass123' \
+--data-urlencode 'customfield13=framepoolIdvalue' \
+--data-urlencode 'customnumfield1=150' \
+--data-urlencode 'sessionlimit=300' \
+--data-urlencode 'groupname=GPON' \
+--data-urlencode 'barringstatus=0' \
+--data-urlencode 'status=1'
+----
+
+== Request Packet
+
+[source, bash]
+----
+echo -e 'Packet-Type = Access-Request
+User-Name = "94666543213"
+CHAP-Password =MySecurePass123 
+CHAP-Challenge = 0x3c16fd3376dc4415c25ee1a1aca9dcdf
+NAS-Port = 2138182
+NAS-IP-Address = 10.174.157.1
+Service-Type = Framed-User
+Framed-Protocol = PPP
+Calling-Station-Id = "78:17:be:16:67:2a"
+NAS-Identifier = "MALA-B-HW-BNG-01"
+NAS-Port-Type = Ethernet
+NAS-Port-Id = "UNION_PLACE-CMBC-GPA03-R1-N1-01 xpon 0/1/0/12:4.1.502=02"
+Acct-Session-Id = "111125"
+Connect-Info = "1000000000"
+Huawei-Startup-Stamp = 1722845152
+Huawei-IPHost-Addr = "255.255.255.255 78:17:be:16:67:2a"
+Huawei-Connect-ID = 46086
+Huawei-Version = "Huawei NetEngine 8000"
+Huawei-Product-ID = "NetEngine 8000"
+Huawei-Domain-Name = "dialog_test"
+Huawei-User-Mac = "78:17:be:16:67:2a"
+ADSL-Agent-Circuit-Id = 0x554e494f4e5f504c4143452d434d42432d47504130332d52312d4e312d30312078706f6e20302f312f302f31323a342e312e353032
+Access-Loop-Encapsulation = 0x000000'| radclient -x localhost:1812 auth mysecret	
+----
+
+== Expected Result
+
+The Radius lookup will succeed because the numerical string extracts cleanly. `Barring-Status` returns `0`, proceeding normally. `Cleartext-Password` evaluates matching CHAP challenge.
+
+[source]
+----
+Received Access-Accept Id 9 from 127.0.0.1:1812 to 127.0.0.1:38910 length 94
+	Message-Authenticator = 0x584a46f29731c36a571ca2003a9e1fcb
+	User-Name = "94100200901"
+	Session-Timeout = 300
+	Idle-Timeout = 150
+	Framed-Pool = "PUBLIC_DYNAMIC"
+	Reply-Message = "Access Accept"
+----
+
+== Database Result
+
+[source, sql]
+----
+mysql> select * from SUBSCRIBER where USER_ID='94100200901';
++-------+-------------+---------------------------------------------------+---------+---------+----------+---------------+----------------+----------------+------------+----------------+----------------+--------------+-----------------+--------------------------+-----------------+--------------+---------+----------------+----------------------------------+--------+-----------+--------------------+---------------------+--------------+--------+------+-----------+-----------------+---------------------+---------------------+
+| id    | USER_ID     | PASSWORD                                          | PCRF_ID | PACKAGE | VRF_NAME | LOOPBACK_NAME | IPV4_POOL_NAME | IPV6_POOL_NAME | IPV4_VALUE | IPV6_LAN_VALUE | IPV6_WAN_VALUE | FRAMED_ROUTE | FRAMEDIPNETMASK | MAX_SIMULTANEOUS_SESSION | SESSION_TIMEOUT | IDLE_TIMEOUT | GROUPID | BARRING_STATUS | NOTES                            | STATUS | FRAMED_ID | INPUT_QOS_TEMPLATE | OUTPUT_QOS_TEMPLATE | SUB_TEMPLATE | MSISDN | APN  | USER_NAME | CREATE_USER     | CREATE_DATE         | LAST_UPDATE         |
++-------+-------------+---------------------------------------------------+---------+---------+----------+---------------+----------------+----------------+------------+----------------+----------------+--------------+-----------------+--------------------------+-----------------+--------------+---------+----------------+----------------------------------+--------+-----------+--------------------+---------------------+--------------+--------+------+-----------+-----------------+---------------------+---------------------+
+| 16835 | 94100200901 | xj8O9Q/UhmBh+p3KNxi5MA==:us+WXn26UXNLL108+n20EQ== |         |         |          |               | PUBLIC_DYNAMIC |                |            |                |                |              | NULL            |                        1 |             300 |          150 | GPON    |              0 | Testing Purpose - Public_dynamic |      1 | NULL      |                    |                     |              |        |      | dialog    | Manudi_12345678 | 2026-03-18 17:17:02 | 2026-03-18 17:17:02 |
++-------+-------------+---------------------------------------------------+---------+---------+----------+---------------+----------------+----------------+------------+----------------+----------------+--------------+-----------------+--------------------------+-----------------+--------------+---------+----------------+----------------------------------+--------+-----------+--------------------+---------------------+--------------+--------+------+-----------+-----------------+---------------------+---------------------+
+1 row in set (0.00 sec)
+----
