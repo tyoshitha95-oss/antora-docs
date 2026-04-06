@@ -1,0 +1,43 @@
+= GPON System Architecture
+:toc: left
+:toclevels: 3
+:icons: font
+:sectnums:
+
+== Core Components
+
+The GPON AAA Architecture relies on the following virtual servers and policy files to manage requests:
+
+. *Virtual Server Context (`gpon`)*  
+The primary listener that binds to specific authorization, authentication, and accounting hooks. It defines the sequence of policies applied to incoming GPON traffic.
+
+. *Authentication Policy (`gpon_auth_policy`)*  
+This is the brain of the GPON authorization process. It strictly manages input validation, extracts realm information, and establishes the canonical username format required for database querying.
+
+. *Session Controllers (`barred_user_policy`, `max_session_policy`)*  
+These policies operate in the Post-Auth phase. They intercept users who successfully authenticated with the database but must be denied network access due to account-level suspensions or concurrent session breaches.
+
+. *Accounting Manager (`gpon_accounting`, `fttx_session`)*  
+Responsible for registering session state, tracking usage data, and storing historical session information to ensure billing and limits are accurate.
+
+== Database Tools
+
+* *GPON SQL (`gpon_sql`)*  
+The standard database connection pool used to look up user credentials and authorization parameters using the canonical username mapping. It retrieves the Cleartext-Password used for CHAP comparisons.
+
+* *GPON Redis (`gpon_auth_policy_redis`)*  
+An alternative caching/lookup mechanism optimized for high-throughput initial checks before falling back to slower relational queries.
+
+== Flow Diagram (Conceptual)
+
+[source, pseudocode]
+----
+Incoming Request 
+  -->  [Authorize: Check Username Syntax] 
+  -->  [Authorize: Extract digits (e.g. 94xxxxxxxxx)] 
+  -->  [SQL: Lookup User by Digits] 
+  -->  [Authenticate: CHAP validation against SQL Cleartext-Password] 
+  -->  [Post-Auth: Check if Barred = 0]
+  -->  [Post-Auth: Check if Simultaneous Sessions = 1]
+  -->  Response (Accept/Reject)
+----
