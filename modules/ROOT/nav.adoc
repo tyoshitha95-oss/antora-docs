@@ -8,7 +8,7 @@
 
 *** Core-Functions Analysis
 **** xref:Dialog/Mac-Auth/core-functions/main-entry-point.adoc[Main Entry Point]
-**** xref:Dialog/Mac-Auth/core-functions/initial-login.adoc[Initoal Login]
+**** xref:Dialog/Mac-Auth/core-functions/initial-login.adoc[Initial Login]
 **** xref:Dialog/Mac-Auth/core-functions/service-info.adoc[Service Authentication]
 **** xref:Dialog/Mac-Auth/core-functions/session-continuation.adoc[Session Continuation]
 **** xref:Dialog/Mac-Auth/core-functions/location-resolution.adoc[Location Resolution]

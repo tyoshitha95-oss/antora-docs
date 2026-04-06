@@ -1,21 +1,18 @@
-= Scenarios 6–10 (Session Continuations)
-
-== Overview
-Continuation scenarios define how the system processes *active sessions* after initial authentication. These flows handle real-time quota tracking, delta calculations, and mid-session enforcement.
+= Scenarios 6–10 
 
 ---
 
-== Scenario 6: First Continuation Baseline
+== Scenario 6: Location quota exceeded (FUP) → Accept throttled _H package
 
-* **Trigger**:
-** Service authentication (`Huawei-Service-Info = N...`)
-** `ControlQT = 0`, `ControlQV = 0`
-** `OldQT = 0`, `OldQV = 0`
+*Trigger*::
+Location quota exceeded
 
-* **Process**: Identified as initial continuation handshake
-* **Outcome**:
-** Treated as baseline (no delta deduction)
-** Establishes tracking references for future calculations
+*Process*::
+- Switch to FUP profile
+- Assign throttled package (`_H`)
+
+*Outcome*::
+Access-Accept (Reduced bandwidth)
 
 === Request
 
@@ -30,7 +27,7 @@ Framed-Protocol=PPP,
 Calling-Station-Id="5a:8c:78:16:5f:24",
 NAS-Identifier="MALA-B-HW-BNG-01",
 NAS-Port-Type=Ethernet,
-NAS-Port-Id="\001QWLAN:wlan1:320:DE_IWAG_MAC:R310:997334611_DETAC_Ruckus_MAIN_AP:34:FA:9F:08:72:40:",
+NAS-Port-Id="\001QWLAN:wlan1:320:DE_IWAG_MAC:R310:997339611_DETAC_Ruckus_MAIN_AP:34:FA:9F:08:72:40:",
 Acct-Session-Id="MALA-B-00210300100320ef3f87AAAYfe",
 Connect-Info="1000000000",
 Huawei-Startup-Stamp=1722845152,
@@ -50,13 +47,19 @@ Realm="mac_auth_realm"' \
 
 [source,pseudocode]
 ----
-Access-Accept:
-Message-Authenticator = 0x387eca28a662f2c923a9cccb5e9158dc,
-Session-Timeout = 3600,
-Idle-Timeout = 1800,
-Class = 0x4c4f4349443a393937333334363131,
-Huawei-Account-Info = "APostpaid_12M_UD_VOL_H",
-Huawei-Account-Info = "NPostpaid_12M_UD_VOL_H"
+RECEIVE Access-Accept Response:
+    Id = 166
+    Source = 127.0.0.1:21812
+    Destination = 127.0.0.1:34250
+    Length = 127
+
+    Attributes:
+        Message-Authenticator = 0x387eca28a662f2c923a9cccb5e9158dc
+        Session-Timeout = 3600
+        Idle-Timeout = 1800
+        Class = 0x4c4f4349443a393937333334363131
+        Huawei-Account-Info = "APostpaid_12M_UD_VOL_H"
+        Huawei-Account-Info = "NPostpaid_12M_UD_VOL_H"
 ----
 
 === Database State
@@ -76,44 +79,33 @@ SELECT USERNAME, OldQT, OldQV FROM MACL2USERS;
 
 ---
 
-== Scenario 7: Standard Delta Continuation
+== Scenario 7: Continuation (normal session) → Accept with recalculated quotas
 
-* **Trigger**: `ControlQT > OldQT`
-* **Process**:
-** Delta calculated → `QTDiff = ControlQT - OldQT`
-** Deduction applied to `TimeQuota`
-** `OldQT` updated to current value
+*Trigger*::
+Active session exists, quotas available
 
-* **Outcome**:
-** Accurate quota tracking
-** Seamless session continuation
+*Process*::
+- Recalculate remaining quotas
+- Update session state
+
+*Outcome*::
+Access-Accept
 
 === Request
 
 [source,pseudocode]
 ----
 echo 'User-Name="5a8c.7816.5f24",
-User-Password="mytest",
 NAS-Port=2138432,
 NAS-IP-Address=10.174.157.1,
 Service-Type=Framed-User,
 Framed-Protocol=PPP,
-Calling-Station-Id="5a:8c:78:16:5f:24",
+Framed-IP-Address=10.254.157.235,
 NAS-Identifier="MALA-B-HW-BNG-01",
 NAS-Port-Type=Ethernet,
 NAS-Port-Id="\001QWLAN:wlan1:320:DE_IWAG_MAC:R310:997339611_DETAC_Ruckus_MAIN_AP:34:FA:9F:08:72:40:",
-Acct-Session-Id="MALA-B-00210300100320ef3f87AAAYfe",
-Connect-Info="1000000000",
-Huawei-Startup-Stamp=1722845152,
-Huawei-IPHost-Addr="255.255.255.255 5a:8c:78:16:5f:24",
-Huawei-Connect-ID=94208,
-Huawei-Version="Huawei NetEngine 8000",
-Huawei-Product-ID="NetEngine 8000",
-Huawei-Domain-Name="mac_auth_test",
-Huawei-User-Mac="5a:8c:78:16:5f:24",
-Access-Loop-Encapsulation=0x000000,
-Module-Failure-Message="Routing to MAC_AUTH: 5a8c.7816.5f24",
-Realm="mac_auth_realm"' \
+Acct-Session-Id="MALA-B-00210SSG000100446996AAAbbc",
+Huawei-Service-Info="NPostpaid_12M_UD_VOL"' \
 | radclient -x localhost:21812 auth mysecret
 ----
 
@@ -121,11 +113,17 @@ Realm="mac_auth_realm"' \
 
 [source,pseudocode]
 ----
-Access-Accept:
-Message-Authenticator = 0x62b157679b474c8538fc8bb4b1e83c6e,
-Session-Timeout = 10800,
-Huawei-Remanent-Volume = 307200,
-Idle-Timeout = 1800
+RECEIVE Access-Accept Response:
+    Id = 61
+    Source = 127.0.0.1:21812
+    Destination = 127.0.0.1:37782
+    Length = 62
+
+    Attributes:
+        Message-Authenticator = 0x62b157679b474c8538fc8bb4b1e83c6e
+        Session-Timeout = 10800
+        Huawei-Remanent-Volume = 307200
+        Idle-Timeout = 1800
 ----
 
 === Database State
@@ -145,13 +143,17 @@ SELECT USERNAME, TimeQuota, OldQT FROM MACL2USERS;
 
 ---
 
-== Scenario 8: Mid-Session Time Exhaustion
+== Scenario 8: Continuation in FUP (within reset window) → Accept
 
-* **Trigger**: Delta reduces `TimeQuota → 0`
-* **Process**: Flags `continuation_reject`
-* **Outcome**:
-** Immediate session termination
-** BNG instructed to drop session
+*Trigger*::
+FUP active and within reset window
+
+*Process*::
+- Maintain capped session limits
+- Apply placeholder bandwidth (low kbps)
+
+*Outcome*::
+Access-Accept (Restricted session)
 
 === Request
 
@@ -175,11 +177,17 @@ Huawei-Service-Info="NPostpaid_12M_UD_VOL"' \
 
 [source,pseudocode]
 ----
-Access-Accept:
-Message-Authenticator = 0x33c23c3198e8eb7167b9dffd9b8ad704,
-Session-Timeout = 10471,
-Huawei-Remanent-Volume = 1048576,
-Idle-Timeout = 1800
+RECEIVE Access-Accept Response:
+    Id = 144
+    Source = 127.0.0.1:21812
+    Destination = 127.0.0.1:57887
+    Length = 62
+
+    Attributes:
+        Message-Authenticator = 0x33c23c3198e8eb7167b9dffd9b8ad704
+        Session-Timeout = 10471
+        Huawei-Remanent-Volume = 1048576
+        Idle-Timeout = 1800
 ----
 
 === Database State
@@ -198,34 +206,43 @@ SELECT USERNAME, TimeQuota FROM MACL2USERS;
 
 ---
 
-== Scenario 9: Mid-Session Volume Exhaustion
+== Scenario 9: Continuation in FUP (outside reset window) → Reject
 
-* **Trigger**:
-** `VolumeQuota → 0`
-** `TimeQuota > 0`
+*Trigger*::
+FUP active and reset window expired
 
-* **Process**:
-** FUP transition is NOT allowed mid-session
-** Flags `continuation_reject`
+*Process*::
+- Check reset eligibility
+- Deny continuation due to policy
 
-* **Outcome**:
-** Session forcibly terminated
-** User must reconnect to enter FUP flow (Scenario 4)
+*Outcome*::
+Access-Reject
+
 
 === Request
 
-[source,pseudocode]
+[source, pseudocode]
 ----
-echo 'User-Name="5a8c.7816.5f24",Acct-Session-Id="CONT004",ControlQV=314572800,OldQV=300000000' \
-| radclient -x localhost auth mysecret
+NAS → AAA:
+ACCOUNTING_STOP {
+  User-Name = "MAC"
+  Session-Time = MAX
+}
+
+AAA → NAS:
+ACCOUNTING_RESPONSE {
+  Close Session
+}
 ----
 
 === Expected Response
 
-[source,pseudocode]
+[source, pseudocode]
 ----
-Access-Reject
-    Reply-Message = "Volume quota exhausted. Reconnect required."
+AAA → NAS:
+ACCOUNTING_RESPONSE {
+  Result = "Session terminated"
+}
 ----
 
 === Database State
@@ -245,17 +262,17 @@ SELECT USERNAME, VolumeQuota, TimeQuota FROM MACL2USERS;
 
 ---
 
-== Scenario 10: FUP Continuation
+== Scenario 10: Volume quota exhausted (qv=0) → Reject
 
-* **Trigger**: `Huawei-Service-Info = ..._H`
-* **Process**:
-** FUP mode enforced continuously
-** Payload capped at `1048576 KB` (1GB logical window)
-** No quota deduction applied to DB
+*Trigger*::
+`qv = 0` (no remaining volume)
 
-* **Outcome**:
-** Infinite volume access (rate-limited)
-** Controlled by time constraints only
+*Process*::
+- Validate quota counters
+- Detect exhaustion
+
+*Outcome*::
+Access-Reject
 
 === Request
 
@@ -279,18 +296,20 @@ Huawei-Service-Info="NPostpaid_12M_UD_VOL"' \
 
 [source,pseudocode]
 ----
-Access-Reject:
-Message-Authenticator = 0x27c7d3cd5c055ca90e415a336bbccaa3,
-Reply-Message = "Volume quota exhausted. Please wait for quota reset interval."
+RECEIVE Access-Reject Response:
+    Id = 145
+    Source = 127.0.0.1:21812
+    Destination = 127.0.0.1:59978
+    Length = 99
 
-Result:
-Expected Access-Accept got Access-Reject
+    Attributes:
+        Message-Authenticator = 0x27c7d3cd5c055ca90e415a336bbccaa3
+        Reply-Message = "Volume quota exhausted. Please wait for quota reset interval."
 
-Reason:
-IF used_volume >= allowed_volume THEN
-    Reject access
-    Reason = "Volume quota exhausted"
-END IF
+    Result:
+        Expected = Access-Accept
+        Actual = Access-Reject
+        Status = FAILURE
 ----
 
 === Database State

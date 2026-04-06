@@ -1,18 +1,19 @@
-= Scenarios 1–5 (Initial & FUP)
-
-== Overview
-These scenarios describe the complete connection lifecycle of a MAC-based user connecting through the BNG, covering initial onboarding, quota reset, normal usage, FUP enforcement, and rejection.
+= Scenarios 1–5 
 
 ---
 
-== Scenario 1: Brand New User
+== Scenario 1: First login (MAC not found) → Accept + init A/N package
 
-* **Trigger**: MAC not found (`MACL2USERS` returns 0 rows)
-* **Process**: `mac_auth_handle_initial_login` → `initial_new`
-* **Outcome**:
-** New user inserted via `sql_mac_auth3`
-** Quotas assigned from `PkgId`
-** Access granted with default timeout
+*Trigger*::
+MAC address not present in `MACL2USERS`
+
+*Process*::
+- Perform DB lookup → no record found
+- Assign default package mapping (A/N)
+- Initialize quota counters
+
+*Outcome*::
+Access-Accept (New session initialized)
 
 === Request
 
@@ -47,13 +48,19 @@ Realm="mac_auth_realm"' \
 
 [source,pseudocode]
 ----
-Access-Accept:
-Message-Authenticator = 0x935aed744061fd90117af9a2a38c5fef,
-Session-Timeout = 3600,
-Idle-Timeout = 1800,
-Class = 0x4c4f4349443a393937333334363131,
-Huawei-Account-Info = "APostpaid_12M_UD_VOL",
-Huawei-Account-Info = "NPostpaid_12M_UD_VOL"
+RECEIVE Access-Accept Response:
+    Id = 123
+    Source = 127.0.0.1:21812
+    Destination = 127.0.0.1:51773
+    Length = 123
+
+    Attributes:
+        Message-Authenticator = 0x935aed744061fd90117af9a2a38c5fef
+        Session-Timeout = 3600
+        Idle-Timeout = 1800
+        Class = 0x4c4f4349443a393937333334363131
+        Huawei-Account-Info = "APostpaid_12M_UD_VOL"
+        Huawei-Account-Info = "NPostpaid_12M_UD_VOL"
 ----
 
 === Database State
@@ -75,14 +82,18 @@ SELECT * FROM MACL2USERS;
 
 ---
 
-== Scenario 2: Returning User (Reset Window Passed)
+== Scenario 2: Initial login within reset window (existing record) → Accept
 
-* **Trigger**: `NOW() - LASTRSTTIME >= QTARSTINTERVAL`
-* **Process**: `initial_reset`
-* **Outcome**:
-** Quotas reset to package maximum
-** `LASTRSTTIME` updated
-** User granted full access again
+*Trigger*::
+MAC exists and current time within reset interval
+
+*Process*::
+- Fetch existing quotas
+- Validate time window
+- No reset applied
+
+*Outcome*::
+Access-Accept (Continue with existing quotas)
 
 === Request
 
@@ -102,19 +113,23 @@ Huawei-Service-Info="NPostpaid_12M_UD_VOL",
 Module-Failure-Message="Routing to MAC_AUTH: 5a8c.7816.5f24",
 Realm="mac_auth_realm"' \
 | radclient -x localhost:21812 auth mysecret
-
-Sent Access-Request Id 69 from 0.0.0.0:49675 to 127.0.0.1:21812 length 257
 ----
 
 === Expected Response
 
 [source,pseudocode]
 ----
-Access-Accept:
-Message-Authenticator = 0x17884e3a330952a68b81ed5a6632d602,
-Session-Timeout = 10471,
-Huawei-Remanent-Volume = 251818,
-Idle-Timeout = 1800
+RECEIVE Access-Accept Response:
+    Id = 69
+    Source = 127.0.0.1:21812
+    Destination = 127.0.0.1:49675
+    Length = 62
+
+    Attributes:
+        Message-Authenticator = 0x17884e3a330952a68b81ed5a6632d602
+        Session-Timeout = 10471
+        Huawei-Remanent-Volume = 251818
+        Idle-Timeout = 1800
 ----
 
 === Database State
@@ -135,30 +150,42 @@ SELECT USERNAME, TimeQuota, VolumeQuota, LASTRSTTIME FROM MACL2USERS;
 
 ---
 
-== Scenario 3: Returning User (Mid-Window, Good Quota)
+== Scenario 3: Initial login beyond reset window → Accept (quotas reset)
 
-* **Trigger**: Within reset interval AND quotas available
-* **Process**: `initial_update`
-* **Outcome**:
-** `LASTLOGINTIME` updated
-** No quota reset
-** Normal access granted
+*Trigger*::
+MAC exists and reset interval expired
+
+*Process*::
+- Reset time and volume quotas
+- Update DB with fresh values
+
+*Outcome*::
+Access-Accept (Quotas refreshed)
 
 === Request
 
-[source,pseudocode]
+[source, pseudocode]
 ----
-echo 'User-Name="5a8c.7816.5f24",Acct-Session-Id="MID001"' \
-| radclient -x localhost auth mysecret
+NAS → AAA:
+ACCESS_REQUEST {
+  User-Name = "MAC"
+}
+
+AAA → NAS:
+ACCESS_ACCEPT {
+  Reset Quotas
+}
 ----
 
 === Expected Response
 
-[source,pseudocode]
+[source, pseudocode]
 ----
-Access-Accept
-    Session-Timeout = 7200
-    Idle-Timeout    = 1800
+AAA → NAS:
+ACCESS_ACCEPT {
+  Result = "Access-Accept"
+  Message = "Quota reset and session allowed"
+}
 ----
 
 === Database State
@@ -179,14 +206,17 @@ SELECT USERNAME, TimeQuota, VolumeQuota, LASTLOGINTIME FROM MACL2USERS;
 
 ---
 
-== Scenario 4: Fair Usage Policy (FUP Applied)
+== Scenario 4: Location not found → Reject
 
-* **Trigger**: Within interval AND `VolumeQuota = 0`
-* **Process**: `initial_fup`
-* **Outcome**:
-** FUP policy applied
-** QoS rate limiting enforced
-** Access allowed with restrictions
+*Trigger*::
+No matching location in `LOCTOPACKAGE`
+
+*Process*::
+- Location validation fails
+
+*Outcome*::
+Access-Reject
+
 
 === Request
 
@@ -221,12 +251,20 @@ Realm="mac_auth_realm"' \
 
 [source,pseudocode]
 ----
-Access-Reject:
-Message-Authenticator = 0xa0c284f9b8ff112659bf3bf86f8fe135,
-Reply-Message = "Location not found"
+RECEIVE Access-Reject Response:
+    Id = 163
+    Source = 127.0.0.1:21812
+    Destination = 127.0.0.1:38174
+    Length = 58
 
-Result:
-Expected Access-Accept got Access-Reject
+    Attributes:
+        Message-Authenticator = 0xa0c284f9b8ff112659bf3bf86f8fe135
+        Reply-Message = "Location not found"
+
+    Result:
+        Expected = Access-Accept
+        Actual = Access-Reject
+        Status = FAILURE
 ----
 
 === Database State
@@ -246,14 +284,17 @@ SELECT USERNAME, TimeQuota, VolumeQuota FROM MACL2USERS;
 
 ---
 
-== Scenario 5: Quota Exhaustion (Access Denied)
+== Scenario 5: Access during restricted time window → Reject
 
-* **Trigger**: `TimeQuota = 0`
-* **Process**: `initial_reject`
-* **Outcome**:
-** Access denied
-** Informational message returned
-** No DB modification
+*Trigger*::
+Current time outside allowed `TIMESPAN`
+
+*Process*::
+- Evaluate time policy
+- Detect violation
+
+*Outcome*::
+Access-Reject
 
 === Request
 
@@ -268,7 +309,7 @@ Framed-Protocol=PPP,
 Calling-Station-Id="5a:8c:78:16:5f:24",
 NAS-Identifier="MALA-B-HW-BNG-01",
 NAS-Port-Type=Ethernet,
-NAS-Port-Id="\001QWLAN:wlan1:320:DE_IWAG_MAC:R310:997334611_DETAC_Ruckus_MAIN_AP:34:FA:9F:08:72:40:",
+NAS-Port-Id="\001QWLAN:wlan1:320:DE_IWAG_MAC:R310:997339611_DETAC_Ruckus_MAIN_AP:34:FA:9F:08:72:40:",
 Acct-Session-Id="MALA-B-00210300100320ef3f87AAAYfe",
 Connect-Info="1000000000",
 Huawei-Startup-Stamp=1722845152,
@@ -288,17 +329,20 @@ Realm="mac_auth_realm"' \
 
 [source,pseudocode]
 ----
-Access-Reject:
-Message-Authenticator = 0x060490cd8a01f63c65900d1e49aeb3bb,
-Reply-Message = "Access outside permitted time window"
+RECEIVE Access-Reject Response:
+    Id = 186
+    Source = 127.0.0.1:21812
+    Destination = 127.0.0.1:52377
+    Length = 76
 
-Result:
-Expected Access-Accept got Access-Reject
+    Attributes:
+        Message-Authenticator = 0x060490cd8a01f63c65900d1e49aeb3bb
+        Reply-Message = "Access outside permitted time window"
 
-Reason:
-IF current_time NOT IN allowed_time_window THEN
-    Reject access
-END IF
+    Result:
+        Expected = Access-Accept
+        Actual = Access-Reject
+        Status = FAILURE
 ----
 
 === Database State
@@ -309,7 +353,7 @@ SELECT USERNAME, TimeQuota, VolumeQuota FROM MACL2USERS;
 ----
 
 |===
-| USERNAME | TimeQuota | VolumeQuota
+| USERNAME | TimeQuota | VolumeQuota 
 
 | 5a8c.7816.5f24
 | 0

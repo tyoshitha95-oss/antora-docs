@@ -1,38 +1,91 @@
 = System Architecture
+:toc: left
+:toclevels: 3
+:sectnums:
 
 == Overview
-The Mac-Auth implementation heavily alters the standard FreeRADIUS server paradigm. Rather than depending on EAP or standard CHAP/PAP modules, it establishes a bespoke logic-gate pipeline directly evaluating MAC addresses and database-held state properties. 
+The Mac-Auth implementation redefines the traditional FreeRADIUS workflow.  
+Instead of relying on EAP or CHAP/PAP, it introduces a custom logic-gate pipeline that directly evaluates MAC addresses and database-driven state.
 
 At a high level, the architecture links:
-* **NAS (Broadband Network Gateway - BNG)**: Usually Huawei BRAS components.
-* **FreeRADIUS Engine**: The policy processor executing Unlang scripting.
-* **Database**: Maintaining dynamic user state like quotas, locations, CDR limits, and active sessions (`MACL2USERS`, `L2RADONLINE`, `MACL2CDR`, `LOCTOPACKAGE`).
 
-== Standard Data Flow
-. *BNG* sends an `Access-Request` containing the user's MAC Address.
-. **FreeRADIUS `authorize` block**:
-  .. Checks if the MAC signature is formally legitimate.
-  .. Validates the physical location.
-  .. Identifies applicable `TIMESPAN` constraints dynamically.
-  .. Resolves whether the packet is an *Initial Connect* or a *Continuation* (Service or FUP).
-  .. Inspects data quotas to potentially step down the service.
-  .. Asserts `Access-Accept` or `Access-Reject`.
-. **FreeRADIUS `post-auth` block**:
-  .. Commits dynamic decrements to user quotas (e.g., deducting cumulative Session Time and Remanent Volume).
-  .. Updates concurrent state caching arrays.
-. **FreeRADIUS `accounting` block**:
-  .. Intersects `Stop` packets to finalize session billing and completely clear session data.
-  .. Processes `Alive` interim packets.
+* *NAS (BNG)* – Huawei BRAS sending authentication requests
+* *FreeRADIUS Engine* – Executes Unlang policy logic
+* *Database Layer* – Stores dynamic user/session state
+
+== Standard Data Flow 
+
+=== 1. Request Phase
+* BNG sends an *Access-Request* containing MAC and session attributes
+
+=== 2. Authorization Engine (`authorize`)
+Core decision pipeline:
+
+* Validate MAC format
+* Check user location
+* Apply time restrictions (`TIMESPAN`)
+* Identify session type:
+  ** Initial Connect
+  ** Continuation (Service / FUP)
+* Evaluate quota usage
+* Final decision:
+  ** Access-Accept
+  ** Access-Reject
+
+=== 3. Post-Processing (`post-auth`)
+Real-time updates:
+
+* Deduct session time and volume
+* Update internal counters
+* Sync active session cache
+
+=== 4. Accounting Engine (`accounting`)
+Session lifecycle management:
+
+* *Stop packets* – finalize billing and clear session
+* *Interim updates* – continuous usage tracking
 
 == Core Components
 
-=== Database Tools
-Data relies entirely on SQL integrations defined in configuration wrappers (such as `sql_mac_auth1`, `sql_mac_auth2`, etc). The specific queries are externalized to ensure atomic read/write locks, preventing concurrent service queues from destructively overlapping quota numbers.
+=== Database Layer
+All logic depends on SQL integrations (e.g., `sql_mac_auth1`, `sql_mac_auth2`).
 
-* **MACL2USERS**: Maps the user's MAC and Location ID to their structural package and active quotas.
-* **L2RADONLINE**: Tracks all live connections per `ACCTSESSIONID` to monitor cumulative delta steps.
+Designed for:
 
-=== Variables Tree Tracking
-The architecture deliberately eschews hard-coding properties into standard variables. It safely shifts data attributes into logical arrays (e.g., `Tmp-String-6`, `Control-UserExists`). 
+* Atomic operations
+* Safe concurrent handling
+* Accurate quota tracking
 
-`update control` blocks act as the lifeblood of this architecture, moving values internally without exposing logic strings arbitrarily back to the BNG.
+==== Key Tables
+
+* *MACL2USERS*
+  ** Maps MAC + Location → Package + Quotas
+
+* *L2RADONLINE*
+  ** Tracks active sessions using `ACCTSESSIONID`
+
+* *MACL2CDR / LOCTOPACKAGE*
+  ** Usage tracking and package mapping
+
+=== Variable Flow (Logic Tree)
+
+Instead of static variables, the system uses dynamic attribute mapping:
+
+* `Tmp-String-*` → Temporary processing values
+* `Control-*` → Internal decision flags
+
+==== Internal Data Movement
+
+* Uses `update control` blocks
+* Ensures:
+  ** No sensitive data leakage
+  ** Clean state transitions
+  ** High-performance execution
+
+== Key Design Highlights
+
+* Fully policy-driven architecture
+* Real-time quota enforcement
+* Intelligent session classification
+* Secure internal variable handling
+* Scalable for high concurrent sessions

@@ -1,19 +1,17 @@
-= Scenarios 11–15 (Accounting & Edge Cases)
-
-== Overview
-These scenarios cover accounting flows and edge conditions that require strict validation, safe handling, and protection against inconsistencies in session tracking and quota calculations.
-
+= Scenarios 11–15 
 ---
 
-== Scenario 11: Anomaly Start Packets
+== Scenario 11: Time quota exhausted (qt=0) → Reject
 
-* **Trigger**: Accounting-Start received without prior authentication
-* **Process**:
-** System validates session against `L2RADONLINE`
-** Creates or updates session tracking entry
-* **Outcome**:
-** Session safely tracked
-** Prevents system inconsistencies or crashes
+*Trigger*::
+`qt = 0` (no remaining session time)
+
+*Process*::
+- Evaluate session time usage
+- Detect exhaustion
+
+*Outcome*::
+Access-Reject
 
 === Request
 
@@ -37,20 +35,22 @@ Huawei-Service-Info="NPostpaid_12M_UD_VOL"' \
 
 [source,pseudocode]
 ----
-Access-Reject:
-Message-Authenticator = 0x27c7d3cd5c055ca90e415a336bbccaa3,
-Reply-Message = "Time quota exhausted. Please wait for quota reset interval."
+RECEIVE Access-Reject Response:
+    Id = 145
+    Source = 127.0.0.1:21812
+    Destination = 127.0.0.1:59978
+    Length = 99
 
-Result:
-Expected Access-Accept got Access-Reject
+    Attributes:
+        Message-Authenticator = 0x27c7d3cd5c055ca90e415a336bbccaa3
+        Reply-Message = "Time quota exhausted. Please wait for quota reset interval."
 
-Reason:
-IF used_session_time >= allowed_session_time THEN
-    Reject access
-    Reason = "Time quota exhausted"
-END IF
+    Result:
+        Expected = Access-Accept
+        Actual = Access-Reject
+        Status = FAILURE
 ----
-
+    
 === Database State
 
 [source,sql]
@@ -60,18 +60,17 @@ SELECT * FROM L2RADONLINE;
 
 ---
 
-== Scenario 12: Standard Accounting Stop
+== Scenario 12: Accounting-Start → Accounting-Response (OK)
 
-* **Trigger**: Accounting-Stop with session usage data
-* **Process**:
-** `mac_auth_handle_acct_stop` calculates:
-*** `QTDiff = ControlQT - OldQT`
-*** `QVDiff = ControlQV - OldQV`
-** Updates user quotas
-** Removes session from active table
-* **Outcome**:
-** Final usage persisted to `MACL2USERS`
-** Session logged into `MACL2CDR`
+*Trigger*::
+`Acct-Status-Type = Start`
+
+*Process*::
+- Create session record in `L2RADONLINE`
+- Initialize tracking fields
+
+*Outcome*::
+Accounting-Response (OK)
 
 === Request
 
@@ -91,7 +90,7 @@ Acct-Authentic=RADIUS,
 Event-Timestamp="Dec  3 2025 17:55:16 +0530",
 NAS-Port-Type=Ethernet,
 Calling-Station-Id="5a:8c:78:16:5f:24",
-NAS-Port-Id="\001QWLAN:wlan1:320:DE_IWAG_MAC:R310:997339611_DETAC_Ruckus_MAIN_AP:34:FA:9F:08:72:40:",
+NAS-Port-Id="\001QWLAN:wlan1:320:DE_IWAG_MAC:R310:997334611_DETAC_Ruckus_MAIN_AP:34:FA:9F:08:72:40:",
 Service-Type=Framed-User,
 Framed-Protocol=PPP,
 Idle-Timeout=1800,
@@ -118,11 +117,13 @@ Realm="mac_auth_realm"' \
 
 === Expected Behavior
 
-[source,pseudocode]
+[source, pseudocode]
 ----
-Accounting-Stop processed
-Quota updated
-Session removed from active list
+AAA → NAS:
+ACCESS_REJECT {
+  Result = "Access-Reject"
+  Message = "Duplicate session detected"
+}
 ----
 
 === Database State
@@ -134,16 +135,17 @@ SELECT * FROM MACL2CDR ORDER BY CreatedDate DESC LIMIT 1;
 
 ---
 
-== Scenario 13: Double Logging Protection
+== Scenario 13: Accounting-Alive (interim) → Accounting-Response (OK)
 
-* **Trigger**: Duplicate Accounting-Stop packets (main + QoS session)
-* **Process**:
-** Compare `Acct-Session-Id` and `Acct-Multi-Session-Id`
-** If mismatch → treat as mirrored session
-** Set `QTDiff = 0`
-* **Outcome**:
-** Prevents duplicate time deduction
-** Only volume processed if applicable
+*Trigger*::
+`Acct-Status-Type = Interim-Update`
+
+*Process*::
+- Update usage counters (time, volume)
+- Sync DB state
+
+*Outcome*::
+Accounting-Response (OK)
 
 === Request
 
@@ -190,28 +192,28 @@ Realm="mac_auth_realm"' \
 
 === Expected Behavior
 
-[source,pseudocode]
+[source, pseudocode]
 ----
-Duplicate session detected
-Time deduction skipped (QTDiff = 0)
-Volume processed normally
+AAA → NAS:
+ACCOUNTING_RESPONSE {
+  Result = "Accepted"
+  Message = "Interim updates handled"
+}
 ----
-
 ---
 
-== Scenario 14: Timespan Boundary Cutoff
+== Scenario 14: Accounting-Stop → Accounting-Response (OK)
 
-* **Trigger**:
-** `Control-UnixDayTime` close to package boundary
-** Remaining time ≤ 300 seconds
+*Trigger*::
+`Acct-Status-Type = Stop`
 
-* **Process**:
-** Override standard quota logic
-** Apply `RestrictionTimeout`
+*Process*::
+- Finalize session usage
+- Remove active session record
+- Write CDR entry
 
-* **Outcome**:
-** Session-Timeout forced to boundary limit
-** User disconnected exactly at cutoff
+*Outcome*::
+Accounting-Response (OK)
 
 === Request
 
@@ -255,37 +257,43 @@ Realm="mac_auth_realm"' \
 
 === Expected Response
 
-[source,pseudocode]
+[source, pseudocode]
 ----
-Access-Accept
-    Session-Timeout = 300
+AAA → NAS:
+ACCOUNTING_RESPONSE {
+  Result = "Accepted"
+  Message = "Counters normalized"
+}
 ----
 
----
+== Scenario 15: Unknown / invalid request → Reject
 
-== Scenario 15: Invalid MAC Discard
+*Trigger*::
+Malformed or unsupported attributes
 
-* **Trigger**: Malformed or invalid MAC address format
-* **Process**:
-** Regex validation in `authorize` fails
-** Request rejected early
-* **Outcome**:
-** Packet discarded
-** No DB interaction
-** No location mapping attempted
+*Process*::
+- Fail validation checks
+
+*Outcome*::
+Access-Reject
 
 === Request
 
-[source,pseudocode]
+[source, pseudocode]
 ----
-echo 'User-Name="INVALID_MAC",Calling-Station-Id="XYZ123"' \
-| radclient -x localhost auth mysecret
+AAA Internal Logic:
+IF no ACCOUNTING_STOP received THEN
+  Auto-Terminate Session
+  Cleanup Resources
+END
 ----
 
 === Expected Response
 
-[source,pseudocode]
+[source, pseudocode]
 ----
-Access-Reject
-    Reply-Message = "Invalid MAC format"
+AAA Internal:
+AUTO_TERMINATION {
+  Action = "Force session cleanup"
+}
 ----
