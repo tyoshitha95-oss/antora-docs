@@ -107,11 +107,10 @@
 
 
 ** xref:Dialog/LTE/overview5.adoc[LTE]
-
-*** xref:Dialog/LTE/architecture.adoc[System Architecture]
-*** xref:Dialog/LTE/core.adoc[Core Function Analysis]
-*** xref:Dialog/LTE/security.adoc[Security Features]
-*** xref:Dialog/LTE/file.adoc[File & Variable Reference]
+*** xref:Dialog/LTE/architecture5.adoc[System Architecture]
+*** xref:Dialog/LTE/core5.adoc[Core Function Analysis]
+*** xref:Dialog/LTE/security5.adoc[Security Features]
+*** xref:Dialog/LTE/file5.adoc[File & Variable Reference]
 *** Test Cases
 **** xref:Dialog/LTE/testcases/std_auth.adoc[LTE Standard Authentication]
 
