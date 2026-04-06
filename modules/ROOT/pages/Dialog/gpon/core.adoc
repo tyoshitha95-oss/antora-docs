@@ -28,16 +28,19 @@ This policy serves as the critical gatekeeper for all GPON access requests.
 
 Every time a user tries to connect, the policy runs through two stages:
 
+[source, flowchart]
+----
 User tries to connect
-        │
-        ▼
-STAGE 1: Input Check  →  Is the username even valid?
-        │
-        ▼
-STAGE 2: Find in Database  →  Does this user exist?
-        │
-        ▼
+    │
+    ▼
+STAGE 1: Input Check → Is the username even valid?
+    │
+    ▼
+STAGE 2: Find in Database → Does this user exist?
+    │
+    ▼
 ACCEPT or REJECT
+----
 
 === Stage 1 - Input Checks (Is the username valid?)
 
@@ -47,12 +50,15 @@ Before doing anything else, the policy ensures the request is properly formed. I
 
 The request must include both a username and a password. If either is missing, it is rejected.
 
+[source, flowchart]
+----
 REQUEST comes in
     │
-    ├── Has "User-Name"?     → NO  →  REJECT "Missing User-Name"
-    ├── Has "CHAP-Password"? → NO  →  REJECT "Missing Password"
+    ├── Has "User-Name"?     → NO  → REJECT "Missing User-Name"
+    ├── Has "CHAP-Password"? → NO  → REJECT "Missing Password"
     │
-    └── Both present?        →  Continue
+    └── Both present?        → Continue
+----
 
 [source]
 ----
