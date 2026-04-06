@@ -1,0 +1,51 @@
+= Security Features
+:toc: left
+:toclevels: 3
+:icons: font
+:sectnums:
+
+The GPON configuration intrinsically provides multiple layers of security to ensure backend systems are protected and authorization limits are respected.
+
+== Input Validation
+
+* *Formatting Checks*  
+Prevents directory traversal attacks (`..`), SQL injection vectors by restricting spaces (` `), and malformed realm processing (`@@`, `.`).
+
+* *Strict Normalization*  
+The system forces all usernames to lowercase to prevent bypass mechanisms utilizing case sensitivity.
+
+* *Canonical Transformation*  
+The backend database is shielded from raw, potentially dangerous input. Only a validated, 11-digit numerical string (`94xxxxxxxxx`) is ever passed to the SQL lookup engine.
+
+== Access Control
+
+* *Barred User Enforcements (`barred_user_policy`)*  
+
+Regardless of password correctness, the user cannot access the GPON network if their billing/administrative status is restricted.
+
+Pseudocode Rule:
+[source]
+----
+IF Barring-Status != 0 THEN REJECT "User Barred"
+----
+
+* *Simultaneous Session Control (`max_session_policy`)*  
+
+Prevents account sharing or ghost session lockups by ensuring strict session counts.
+
+Pseudocode Rule:
+[source]
+----
+IF Simultaneous-Session-Status != 1 THEN REJECT "Maximal Concurrent User Sessions Reached"
+----
+
+== Data Leakage Prevention
+
+In the `post-auth` block, the system explicitly purges internal identifiers:
+
+[source]
+----
+update reply { &User-Name !* ANY }
+----
+
+This guarantees the downstream network equipment and user do not receive internal identifiers utilized by the backend database, masking the internal architecture.
