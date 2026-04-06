@@ -1,0 +1,200 @@
+= Enterprise VPN Profile Test Case
+:toc: left
+:toclevels: 3
+:icons: font
+:sectnums:
+
+== Overview
+This test case validates authentication and mapping logic for a **GPON subscriber** requiring a dedicated **Enterprise VPN routing configuration**.
+
+The system enforces:
+- VRF-based isolation
+- Static IP assignment
+- Session control policies
+
+TIP: This ensures enterprise users are routed through a secure and isolated network tunnel.
+
+== Configuration Summary
+
+[cols="1,2", options="header"]
+|===
+| Parameter | Value
+
+| Endpoint ID
+| `94666543214`
+
+| Authentication Password
+| `MySecurePass123`
+
+| Assigned Group
+| `GPON`
+
+| VRF Context
+| `vrfValue`
+
+| Routed Subnet
+| `192.168.1.100/20`
+
+| Assigned IP
+| `192.168.1.100`
+
+| Session Limit
+| `300`
+
+| Barring Status
+| `0` (Unbarred)
+
+| Status
+| `1` (Active)
+|===
+
+== Session Attributes
+
+[cols="1,2", options="header"]
+|===
+| Attribute | Value
+
+| customfield3
+| VRF Context (`vrfValue`)
+
+| customfield15
+| Subnet (`192.168.1.100/20`)
+
+| customnumfield1
+| `150`
+
+| userip
+| `192.168.1.100`
+|===
+
+NOTE: These attributes are passed to the AAA backend for policy enforcement.
+
+== API Test Request
+
+[source, bash]
+----
+curl --location --request PUT 'http://localhost:4000/users/94666543214' \
+--header 'Content-Type: application/x-www-form-urlencoded' \
+--header 'Authorization: ••••••' \
+--data-urlencode 'password=MySecurePass123' \
+--data-urlencode 'customfield3=vrfValue' \
+--data-urlencode 'customfield15=192.168.1.100/20' \
+--data-urlencode 'customnumfield1=150' \
+--data-urlencode 'userip=192.168.1.100' \
+--data-urlencode 'sessionlimit=300' \
+--data-urlencode 'groupname=GPON' \
+--data-urlencode 'barringstatus=0' \
+--data-urlencode 'status=1'
+----
+
+TIP: This request updates subscriber attributes and triggers AAA mapping logic.
+
+== Expected RADIUS Behavior
+
+=== Access Request (Input Packet)
+
+[%collapsible]
+====
+[source, bash]
+----
+echo -e 'Packet-Type = Access-Request
+User-Name = "94100200900"
+CHAP-Password =dialog
+CHAP-Challenge = 0x3c16fd3376dc4415c25ee1a1aca9dcdf
+NAS-Port = 2138182
+NAS-IP-Address = 10.174.157.1
+Service-Type = Framed-User
+Framed-Protocol = PPP
+Calling-Station-Id = "78:17:be:16:67:2a"
+NAS-Identifier = "MALA-B-HW-BNG-01"
+NAS-Port-Type = Ethernet
+NAS-Port-Id = "UNION_PLACE-CMBC-GPA03-R1-N1-01"
+Acct-Session-Id = "111125"
+Connect-Info = "1000000000"
+Huawei-Domain-Name = "dialog_test"
+' | radclient -x localhost:1812 auth mysecret
+----
+====
+
+=== Access Accept (Output Packet)
+
+[%collapsible]
+====
+[source]
+----
+Received Access-Accept Id 10 from 127.0.0.1:1812
+User-Name = "94100200902"
+Session-Timeout = 300
+Idle-Timeout = 150
+Framed-IP-Netmask = 255.255.255.255
+Framed-IP-Address = 192.168.1.1
+Huawei-Domain-Name = "vrfvalue"
+Reply-Message = "Access Accept"
+----
+====
+
+IMPORTANT: The `Huawei-Domain-Name` reflects the VRF mapping applied.
+
+== Database Verification
+
+=== Subscriber Record
+
+[%collapsible]
+====
+[source, sql]
+----
+SELECT * FROM SUBSCRIBER WHERE USER_ID='94100200902';
+----
+====
+
+=== Result
+
+[cols="1,2", options="header"]
+|===
+| Field | Value
+
+| USER_ID
+| `94100200902`
+
+| VRF_NAME
+| `vrfvalue`
+
+| IPV4_VALUE
+| `192.168.1.1`
+
+| FRAMEDIPNETMASK
+| `255.255.255.255`
+
+| FRAMED_ROUTE
+| `192.168.1.100/20`
+
+| SESSION_TIMEOUT
+| `300`
+
+| IDLE_TIMEOUT
+| `150`
+
+| BARRING_STATUS
+| `0`
+
+| STATUS
+| `1`
+|===
+
+TIP: This confirms that the subscriber is correctly mapped and activated.
+
+== Validation Checklist
+
+- [x] Authentication successful
+- [x] VRF mapping applied
+- [x] Static IP assigned
+- [x] Session limits enforced
+- [x] Subscriber status active
+- [x] Database updated correctly
+
+== Notes
+
+IMPORTANT:
+- Ensure VRF names match exactly in backend and network device.
+- Any mismatch may lead to routing failures.
+- Session parameters must align with AAA policies.

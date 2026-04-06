@@ -1,0 +1,72 @@
+= Time Calculations
+:toc: left
+:toclevels: 2
+:sectnums:
+
+== Overview
+
+Mac-Auth relies on strict UNIX epoch timestamps to control interval flow and time-based calculations.
+
+---
+
+== Core Mathematical Conversions
+
+[tabs]
+====
+
+Epoch Parsing::
++
+* Extracts time in seconds using epoch format
++
+[source,sql]
+----
+unix_timestamp(now()) - unix_timestamp(LASTRSTTIME)
+----
++
+* Produces elapsed time in seconds
+
+Interval Tracking (`RstInterval`)::
++
+* Tracks interval values uniformly in seconds
+* Maintains consistent time boundaries
+* Ensures accurate interval mapping
+
+End of Interval Caps::
++
+* Calculates remaining interval time
++
+[source,sql]
+----
+RstInterval - ElapsedTime
+----
++
+* Prevents overflow beyond defined limits
+
+Session Boundary Caps::
++
+* Applies final constraints using `Timespan`
+* Ensures session limits are not exceeded
+* Wraps calculations within defined boundaries
+
+====
+
+---
+
+== Quick View
+
+[cols="1,2", options="header"]
+|===
+| Component | Behavior
+
+| Epoch Parsing
+| Calculates elapsed time in seconds
+
+| Interval Tracking
+| Maintains consistent interval limits
+
+| Interval Caps
+| Prevents overflow using remaining time logic
+
+| Session Caps
+| Enforces final time boundaries
+|===

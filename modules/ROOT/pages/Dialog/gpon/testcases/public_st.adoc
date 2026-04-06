@@ -1,0 +1,156 @@
+= Public Static Assignments Test Case
+:toc: left
+:toclevels: 3
+:icons: font
+:sectnums:
+
+== Description
+These tests validate the behavior of the GPON configuration when handling Public Static IP leases. The configurations map a strict `userip` address for IPv4 and optionally map a bounded IPv6 prefix constraint.
+
+== Test 1 - Public Static (without framedipv6prefix)
+
+=== Configuration Mapping
+
+[cols="1,2", options="header"]
+|===
+| Parameter | Value
+
+| Endpoint ID
+| `94897845324`
+
+| customfield15
+| `192.168.1.100/20`
+
+| userip
+| `192.168.1.101`
+
+| sessionlimit
+| `200`
+
+| groupname
+| `GPON`
+|===
+
+=== Implementation
+
+[source, bash]
+----
+curl --location --request PUT 'http://localhost:4000/users/94897845324' \
+--header 'Content-Type: application/x-www-form-urlencoded' \
+--header 'Authorization: ••••••' \
+--data-urlencode 'password=MySecurePass12345' \
+--data-urlencode 'customfield15=192.168.1.100/20' \
+--data-urlencode 'customnumfield1=150' \
+--data-urlencode 'userip=192.168.1.101' \
+--data-urlencode 'sessionlimit=200' \
+--data-urlencode 'groupname=GPON' \
+--data-urlencode 'barringstatus=0' \
+--data-urlencode 'status=1'
+----
+
+=== Request Packet
+
+[source, bash]
+----
+echo -e 'Packet-Type = Access-Request
+User-Name = "94666543213"
+CHAP-Password =MySecurePass123 
+CHAP-Challenge = 0x3c16fd3376dc4415c25ee1a1aca9dcdf
+NAS-Port = 2138182
+NAS-IP-Address = 10.174.157.1
+Service-Type = Framed-User
+Framed-Protocol = PPP
+Calling-Station-Id = "78:17:be:16:67:2a"
+NAS-Identifier = "MALA-B-HW-BNG-01"
+NAS-Port-Type = Ethernet
+NAS-Port-Id = "UNION_PLACE-CMBC-GPA03-R1-N1-01 xpon 0/1/0/12:4.1.502=02"
+Acct-Session-Id = "111125"
+Connect-Info = "1000000000"
+Huawei-Startup-Stamp = 1722845152
+Huawei-IPHost-Addr = "255.255.255.255 78:17:be:16:67:2a"
+Huawei-Connect-ID = 46086
+Huawei-Version = "Huawei NetEngine 8000"
+Huawei-Product-ID = "NetEngine 8000"
+Huawei-Domain-Name = "dialog_test"
+Huawei-User-Mac = "78:17:be:16:67:2a"
+ADSL-Agent-Circuit-Id = 0x554e494f4e5f504c4143452d434d42432d47504130332d52312d4e312d30312078706f6e20302f312f302f31323a342e312e353032
+Access-Loop-Encapsulation = 0x000000'| radclient -x localhost:1812 auth mysecret	
+----
+
+[source]
+----
+Received Access-Accept Id 106 from 127.0.0.1:1812 to 127.0.0.1:41884 length 110
+	Message-Authenticator = 0x3ed87f2eaa8e895f1ccccc1fb34e6279
+	User-Name = "94100200904"
+	Session-Timeout = 86400
+	Idle-Timeout = 150
+	Framed-IP-Netmask = 255.255.255.255
+	Framed-IP-Address = 192.168.1.1
+	Reply-Message = "Access Accept"
+----
+
+== Test 2 - Public Static (with framedipv6prefix)
+
+=== Configuration Mapping
+
+* Includes the `framedipv6prefix` to delegate a strict static IPv6 subnet to the customer premises equipment (CPE).
+
+=== Implementation
+
+[source, bash]
+----
+curl --location --request PUT 'http://localhost:4000/users/94897845325' \
+--header 'Content-Type: application/x-www-form-urlencoded' \
+--header 'Authorization: ••••••' \
+--data-urlencode 'password=MySecurePass12345' \
+--data-urlencode 'customfield15=192.168.1.100/20' \
+--data-urlencode 'customnumfield1=150' \
+--data-urlencode 'framedipv6prefix=2402:4000:bbf9:0e42:0000:0000:0000:0000' \
+--data-urlencode 'userip=192.168.1.101' \
+--data-urlencode 'sessionlimit=200' \
+--data-urlencode 'groupname=GPON' \
+--data-urlencode 'barringstatus=0' \
+--data-urlencode 'status=1'
+----
+
+=== Request Packet
+
+[source, bash]
+----
+echo -e 'Packet-Type = Access-Request
+User-Name = "94666543213"
+CHAP-Password =MySecurePass123 
+CHAP-Challenge = 0x3c16fd3376dc4415c25ee1a1aca9dcdf
+NAS-Port = 2138182
+NAS-IP-Address = 10.174.157.1
+Service-Type = Framed-User
+Framed-Protocol = PPP
+Calling-Station-Id = "78:17:be:16:67:2a"
+NAS-Identifier = "MALA-B-HW-BNG-01"
+NAS-Port-Type = Ethernet
+NAS-Port-Id = "UNION_PLACE-CMBC-GPA03-R1-N1-01 xpon 0/1/0/12:4.1.502=02"
+Acct-Session-Id = "111125"
+Connect-Info = "1000000000"
+Huawei-Startup-Stamp = 1722845152
+Huawei-IPHost-Addr = "255.255.255.255 78:17:be:16:67:2a"
+Huawei-Connect-ID = 46086
+Huawei-Version = "Huawei NetEngine 8000"
+Huawei-Product-ID = "NetEngine 8000"
+Huawei-Domain-Name = "dialog_test"
+Huawei-User-Mac = "78:17:be:16:67:2a"
+ADSL-Agent-Circuit-Id = 0x554e494f4e5f504c4143452d434d42432d47504130332d52312d4e312d30312078706f6e20302f312f302f31323a342e312e353032
+Access-Loop-Encapsulation = 0x000000'| radclient -x localhost:1812 auth mysecret	
+----
+
+[source]
+----
+Received Access-Accept Id 106 from 127.0.0.1:1812 to 127.0.0.1:41884 length 110
+	Message-Authenticator = 0x3ed87f2eaa8e895f1ccccc1fb34e6279
+	User-Name = "94100200904"
+	Session-Timeout = 86400
+	Idle-Timeout = 150
+	Framed-IP-Netmask = 255.255.255.255
+	Framed-IP-Address = 192.168.1.1
+	Delegated-IPv6-Prefix = 2402:4000:bbf9:e42::/128
+	Reply-Message = "Access Accept"
+----

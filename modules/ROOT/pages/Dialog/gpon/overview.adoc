@@ -1,0 +1,26 @@
+= GPON Authentication Overview
+:toc: left
+:toclevels: 3
+:icons: font
+:sectnums:
+
+== Introduction
+
+The GPON Authentication module provides AAA (Authentication, Authorization, and Accounting) services for GPON (Gigabit Passive Optical Network) broadband users. The configuration uses FreeRADIUS to intercept incoming access requests from users, sanitize and validate the credentials, and proxy the validation to a backend database (SQL or Redis) for the final accept/reject decision.
+
+== Key Objectives
+
+* Provide robust, high-performance authentication for GPON subscribers.
+* Enforce strict username and password format constraints to prevent injection and malformed requests.
+* Validate simultaneous sessions to prevent abuse.
+* Ensure barred users blockages are strictly enforced at the post-authentication stage.
+
+== Workflow Summary
+
+. The GPON network equipment (BNG/BRAS) sends a `RADIUS Access-Request`.
+. The Radius server captures the request at the main entry site (`sites-available/gpon`).
+. The server runs pre-checks (validating spacing, dot formatting, and realms).
+. Extract the canonical user identifier (94-prefixed number).
+. Pass the sanitized request to the database.
+. Return `Access-Accept` or `Access-Reject` based on retrieved `Cleartext-Password`.
+. Apply post-authentication bounds (Max sessions, Barring status).

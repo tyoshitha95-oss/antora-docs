@@ -1,0 +1,87 @@
+= Performance & Security
+:toc: left
+:toclevels: 2
+:sectnums:
+
+== Security
+
+System security is enforced through strict validation and controlled access mechanisms.
+
+=== Input Validation
+
+* All incoming attributes are validated before processing
+* Ensures correct data types and formats
+* Rejects malformed or unexpected requests early
+* Prevents injection and malformed packet issues
+* Maintains system stability under abnormal inputs
+
+[NOTE]
+====
+Validation occurs before any database or policy execution.
+====
+
+=== Access Control
+
+* Only trusted clients defined in `clients.conf` are allowed
+* Requests are verified using shared secrets
+* Unauthorized sources are silently dropped
+* Role-based checks can be applied for policy enforcement
+
+[TIP]
+====
+Keep client definitions minimal and strictly controlled.
+====
+
+---
+
+== Performance
+
+The system is optimized to handle high-throughput environments efficiently.
+
+=== Database Optimizations
+
+* Uses optimized queries via `sql_mac_auth1`
+* Minimizes redundant database writes
+* Efficient indexing on session identifiers
+* Caching used for interim updates (Alive packets)
+* Reduces load during peak authentication bursts
+
+[IMPORTANT]
+====
+Avoid unnecessary writes during interim updates to reduce DB load.
+====
+
+=== Session Efficiency
+
+* Lightweight handling of Start / Alive / Stop packets
+* Interim updates only refresh timestamps (no heavy processing)
+* Stop events handle final calculations in a single flow
+* Stateless design ensures minimal memory overhead
+* Supports high concurrency without performance degradation
+
+---
+
+==  Execution Flow Insight
+
+[source,pseudocode]
+----
+on Accounting Packet:
+
+    if Status == Start:
+        Write session entry
+
+    else if Status == Alive:
+        Update last seen timestamp
+
+    else if Status == Stop:
+        Finalize session and compute usage
+----
+
+---
+
+== Key Takeaways
+
+* Secure request validation prevents malformed input issues
+* Strict access control protects the system boundary
+* Optimized database usage improves scalability
+* Efficient session handling supports high traffic environments

@@ -1,34 +1,25 @@
-= MAC Authentication Documentation
-:toc: left
-:toclevels: 2
-:sectnums:
+= Mac-Auth Documentation Overview
 
-== Getting Started
+== Introduction
+The Mac-Auth system is a highly customized AAA (Authentication, Authorization, and Accounting) logic implemented within FreeRADIUS. Its primary purpose is to handle seamless, MAC-address-based authentication, manage data and time quotas dynamically, enforce Fair Usage Policies (FUP), and restrict access based on intricate time-based rules.
 
-To begin:
+== Core Capabilities
+The project abstracts standard RADIUS attributes into customized variables using `update control` sections to track session states, user quotas, location-based packages, and continuation cycles natively.
 
-. Configure RADIUS server.
-. Register subscriber MAC addresses.
-. Define location and time policies.
-. Set quota and FUP thresholds.
-. Monitor sessions and logs.
+Key capabilities include:
 
-== Documentation Sections
+* **Initial Authentication (`mac_auth_handle_initial_login`)**: Registers new MAC addresses, assigns packages based on physical location (`Control-LocId`), and handles reset intervals (`QTARSTINTERVAL`).
+* **Service Authentication (`mac_auth_handle_service_info`)**: Detects BNG service queues (like Huawei's `SSG` queues or FUP `_H` extensions) and delegates traffic logically to continuations or resets.
+* **Session Continuation (`mac_auth_handle_session_continuation`)**: Dynamically computes usage deltas from cumulative BNG metrics (e.g., `Huawei-Remanent-Volume` and `Session-Timeout`).
+* **Timespan Enforcement (`mac_auth_check_timespan`)**: Limits user connectivity to explicit days and times via a flexible regex-based timespan array parser.
+* **Fair Usage Policy (FUP)**: Gracefully steps users down to reduced-speed service tiers once data quotas are exhausted, rather than outright rejection.
+* **Accounting Verification**: Precisely handles `Start`, `Alive`, and `Stop` records to prevent duplicate accounting metric deductions during concurrent service sessions vs main sessions.
 
-* Authentication Flow Analysis
-* Policy Engine Configuration
-* Quota Management Logic
-* Database Structure
-* Performace Consideration
-* Security Features
-* Troubleshooting Guide
+== Documentation Scope
+This documentation spans the entirety of the customized `unlang policies` (`policy.d`) and server files `sites-available`. It is split logically to avoid exposing direct codebase implementations. All logic is presented using abstract structural explanations, pseudocode, conditional flows, and variables trees.
 
-
-== Version Information
-
-System Version: 3.2.9  
-Last Updated: 2026  
-
----
-
-
+* **Architecture**: System components.
+* **Core Function Analysis**: How each policy behaves step by step.
+* **Accounting**: The stop cycle processing.
+* **Variables Reference**: Master dictionary of all control variables populated by these scripts.
+* **Test Cases**: Packet flows showcasing what input creates what output.

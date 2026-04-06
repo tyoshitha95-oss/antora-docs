@@ -1,0 +1,76 @@
+= Main Entry Point
+
+== Context
+The primary point of entry for this ecosystem resides in the virtual server file (e.g., `sites-available/mac_auth`). It routes every incoming RADIUS request through tightly ordered policy filters.
+
+== Flow Breakdown
+
+The `authorize` section determines whether a user is allowed or denied access when attempting to connect.
+
+.authorize block
+[source,pseudocode]
+----
+AUTHORIZE {
+    Log Request
+    Extract Control-MAC from Calling-Station-Id
+    
+    if User-Name format is valid MAC:
+        Parse Circuit/Remote ID
+        Get Location ID
+        Check Timespan
+        
+        Handle Session Continuation logic
+        Handle Service Info logic
+        Check FUP mode enforcement
+        
+        Adjust Reply attributes
+        
+        if (AuthType was set to "initial_reject"):
+            Reject
+            
+        Set default Auth-Type to Accept if missing
+    else:
+        Reject ("Invalid MAC format")
+}
+----
+
+The `post-auth` section runs after the user has been authenticated. It performs final processing tasks such as updating the database and deducting the user’s quota.
+
+.post-auth block
+[source,pseudocode]
+----
+POST-AUTH {
+    if User-Name format is valid MAC:
+        Handle Post-Auth Writes (Perform DB updates & deduct quotas)
+        
+        if (AuthType was set to "continuation_reject" during deduct):
+            Reject
+            
+    Log Final Outcome (Accept/Reject)
+}
+----
+
+The `ACCOUNTING` section handles usage tracking when the user is connected (start, stop, or interim updates).
+
+.accounting block
+[source,pseudocode]
+----
+ACCOUNTING {
+    if User-Name format is valid:
+        Set Session ID properties
+        Get Class values
+        
+        if Acct-Status-Type == Start:
+            Record Start in DB
+        else if Acct-Status-Type == Stop:
+            Handle Accounting Stop (Calculate deltas and remove active session)
+        else if Acct-Status-Type == Alive:
+            Record Interim update
+    else:
+        Reject
+}
+----
+
+== Key Highlights
+* **Initial Checks First:** It verifies geographic/packet structures (`Parse Remote Circuit`, `Get Location`, `Check Timespan`) before assessing billing. If the location is unknown, or the timespan is locked, it fails safely early.
+* **Accounting Protection:** The entry point rejects badly formatted MAC addresses directly in accounting limits to protect the database from poisoning.

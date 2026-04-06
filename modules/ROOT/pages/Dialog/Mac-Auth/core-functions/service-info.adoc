@@ -1,0 +1,59 @@
+= Service Authentication (`mac_auth_handle_service_info`)
+
+== Overview
+Service Authentication interprets Huawei's specific `Huawei-Service-Info` attributes. The BNG differentiates between physical port link startups and explicit queue logic allocations across these variables, requiring FreeRADIUS to route them cleanly.
+
+== Detection Logic
+The logic hinges strictly on string patterning embedded within `Huawei-Service-Info`:
+* **Starts with "N"**: Identifies a standard Service Authentication request.
+* **Contains "_H" suffix**: Identifies the user explicitly accessing a Fair Usage Policy (FUP) queue, which restricts speeds significantly.
+* **Empty/Missing**: Implicitly identifies a standard initial MAC authentication attempt.
+
+== Scenarios
+. **The `_H` FUP Queue Process**:
+  * Triggers when the user exhausts standard data but utilizes reserved Time Quotas.
+  * Re-verifies `NOW() - LASTRSTTIME` against `Reset Interval`.
+  * If the reset interval passed, forces an `initial_reset` sequence immediately restoring full quota.
+  * If still inside the restricted interval: Calculates precisely how much time remains within the interval (`ResetInterval - ElapsedTime`), takes the absolute minimum between that value and the user's stored `TimeQuota`, checks TIMESPAN bounds, and delegates `continuation_fup`.
+  * *Criticality*: It ensures users sitting within limited environments cannot circumvent the hard timers.
+
+. **The Standard Queue Process ("N")**:
+  * Immediately redirects to the Session Continuation methodology, comparing new and old packet data natively.
+
+. **Empty Queue**:
+  * Aborts service checks and runs `mac_auth_handle_initial_login`.
+
+== Pseudocode
+
+[source,pseudocode]
+----
+ServiceInfo = request.Huawei-Service-Info
+
+if ServiceInfo starts with "N":
+    if ServiceInfo contains "_H":
+        // FUP Queue Handler
+        Elapsed = NOW - LASTRSTTIME
+        
+        if Elapsed >= ResetInterval:
+            AuthType = "initial_reset"
+        else:
+            RemainingTimeInInterval = ResetInterval - Elapsed
+            UserTimeQuota = DB.GetTimeQuota()
+            
+            UserTimeQuota = MIN(UserTimeQuota, RemainingTimeInInterval)
+            UserTimeQuota = MIN(UserTimeQuota, TimespanTimeout)
+            
+            if UserTimeQuota == 0:
+                AuthType = "initial_reject"
+            else:
+                AuthType = "continuation_fup"
+                FupString = "_H"
+                Prepare Delta logic (OldQT, OldQV)
+                
+    else:
+        // Regular Continuation
+        HandleSessionContinuation()
+else:
+    // Pure initial access
+    HandleInitialLogin()
+----

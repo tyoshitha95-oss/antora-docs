@@ -1,0 +1,42 @@
+= Common Error Scenarios
+:toc: left
+:toclevels: 2
+:sectnums:
+
+== Overview
+
+Lists edge states that are handled cleanly and predictably within the system.
+
+---
+
+== Common Failures
+
+[tabs]
+====
+Failure to match Circuit ID::
++
+* Logged safely within system bounds
+* Handled without interrupting processing flow
+* Maintains consistency and stability
+
+Accounting Overshoot::
++
+* Filtered automatically during processing
+* Prevents incorrect calculations
+* Ensures clean and controlled handling
+====
+
+---
+
+== Quick View
+
+[cols="1,2", options="header"]
+|===
+| Scenario | Behavior
+
+| Circuit ID Mismatch
+| Logged and safely handled without disruption
+
+| Accounting Overshoot
+| Automatically filtered to prevent inconsistencies
+|===

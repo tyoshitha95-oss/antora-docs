@@ -1,0 +1,93 @@
+= Error Handling
+:toc: left
+:toclevels: 2
+:sectnums:
+
+== Overview
+
+Error handling is implemented using *native Unlang constraints* to ensure:
+
+* Invalid requests are safely ignored
+* Malformed sessions are dropped early
+* System stability is maintained without crashes
+* Processing remains lightweight and predictable
+
+[NOTE]
+====
+All error handling is designed to be *silent* to avoid unnecessary system overhead.
+====
+
+---
+
+== Handling Strategies
+
+=== Missing Variables
+
+* Uses safe fallback expansion:
++
+[source,unlang]
+----
+%{%{Huawei-Service-Info}:-0}
+----
+
+* Prevents null or undefined attribute failures
+* Ensures default values are applied dynamically
+* Avoids breaking policy execution
+
+[TIP]
+====
+Always define fallback values for optional attributes.
+====
+
+---
+
+=== Regex Boundaries
+
+* Input strings are validated using strict regex patterns
+* Malformed or unexpected values are automatically rejected
+* Prevents incorrect parsing and downstream failures
+* Ensures only valid formats are processed
+
+[IMPORTANT]
+====
+Invalid regex matches result in immediate request drop.
+====
+
+---
+
+=== Double Deductions Prevention
+
+* Checks applied before quota or usage updates
+* Prevents duplicate accounting or billing calculations
+* Ensures idempotent processing of accounting packets
+* Maintains consistency across Start / Alive / Stop flows
+
+---
+
+== Error Handling Flow
+
+[source,pseudocode]
+----
+on request:
+
+    if missing required attribute:
+        apply default or skip safely
+
+    else if regex validation fails:
+        drop request
+
+    else if duplicate accounting detected:
+        ignore update
+
+    else:
+        process normally
+----
+
+---
+
+== Key Benefits
+
+* Robust handling of malformed inputs
+* Prevents system crashes and inconsistencies
+* Ensures predictable and stable execution
+* Supports high-volume environments efficiently
