@@ -20,9 +20,6 @@
 **** xref:Dialog/Mac-Auth/accounting/accounting-handlers.adoc[Accounting Handlers]
 **** xref:Dialog/Mac-Auth/accounting/accounting-stop.adoc[Accounting Stop]
 
-*** Key Configuration Parameters
-**** xref:Dialog/Mac-Auth/time-calculations.adoc[Time Calculations]
-**** xref:Dialog/Mac-Auth/session-management.adoc[Session Management]
 *** Variable-References
 **** xref:Dialog/Mac-Auth/variable-reference/timespan.adoc[Timespan Variables]
 **** xref:Dialog/Mac-Auth/variable-reference/initial-login.adoc[Initial Login Variables]
