@@ -1,1 +1,69 @@
-= Core Functionalities
+= Core Function Analysis
+:toc: left
+:toclevels: 3
+:icons: font
+:sectnums:
+
+== Main Entry Point Analysis
+
+LTE traffic is handled by two primary entry points depending on the network configuration.
+
+=== Dedicated LTE Port (`sites-available/lte`)
+
+This server block is focused purely on LTE traffic. It follows a standard FreeRADIUS execution flow:
+
+[source, pseudocode]
+----
+BLOCK Authorize:
+    EXECUTE lte_auth_policy  // Prepends internal credentials
+    EXECUTE pap              // Sets up password verification
+    LOG "LTE-AUTH-REQ"       // Records the attempt
+
+BLOCK Authenticate:
+    CHECK Auth-Type PAP:
+        PROCEED IF password matches internal standard
+----
+
+=== Conditional Dispatcher (`sites-available/ent_lte`)
+
+In environments where Enterprise and LTE traffic share a common gateway, a dispatcher logic is used:
+
+[source, pseudocode]
+----
+FUNCTION Route_Request():
+    IF Called-Station-Id MATCHES "lte.*" OR "dbnbb*":
+        EXECUTE lte_auth_policy
+        LOG "LTE-Traffic-Detected"
+    ELSE:
+        EXECUTE ent_auth_policy
+        LOG "Enterprise-Traffic-Detected"
+----
+
+== Policy Logic (`policy.d/lte_auth_policy`)
+
+The LTE policy is designed for efficiency. Its primary role is to bridge the gap between the hardware-based authentication of the LTE network and the software-based validation of the AAA.
+
+[source, pseudocode]
+----
+POLICY lte_auth_policy:
+    // Ensure the PAP module has a known password to compare against
+    SET Cleartext-Password = "dialog"
+    
+    // Set a default success message for the reply packet
+    SET Reply-Message = "LTE Access Granted"
+    
+    RETURN ok
+----
+
+== Accounting Execution
+
+The accounting phase differs from authentication by explicitly writing to the persistent store.
+
+[source, pseudocode]
+----
+BLOCK Accounting:
+    EXECUTE lte_accounting  // Formats usage attributes
+    EXECUTE lte_sql         // Writes to the SQL 'radacct' equivalent
+----
+
+This ensures that even if the authentication is simplified, the usage tracking remains rigorous.

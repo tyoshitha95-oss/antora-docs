@@ -1,0 +1,56 @@
+= System Architecture
+:toc: left
+:toclevels: 3
+:icons: font
+:sectnums:
+
+== Core Components
+
+The LTE AAA Architecture is composed of several interlocking virtual servers and policy definitions:
+
+. *Standard LTE Server (`sites-available/lte`)*  
+A dedicated virtual server listening for standard LTE RADIUS traffic. It implements a strict `authorize` and `authenticate` block using `pap`.
+
+. *Shared LTE/ENT Server (`sites-available/ent_lte`)*  
+A high-capacity listener that acts as a traffic dispatcher. It uses regex or exact matching on the `Called-Station-Id` attribute to distinguish between standard LTE users and Enterprise corporate users.
+
+. *LTE Authentication Policy (`policy.d/lte_auth_policy`)*  
+A centralized logic block that standardizes LTE requests. It ensures that the `Cleartext-Password` is correctly populated for the `pap` module to process, effectively "blind-accepting" hardware-verified devices once they hit the AAA layer.
+
+. *LTE Accounting Block*  
+Managed by `lte_accounting` and `lte_sql`. This system ensures that every byte of data transacted by the LTE UE (User Equipment) is accurately reflected in the subscriber's session record.
+
+== Database Tools
+
+* *LTE SQL (`lte_sql`)*  
+A specialized SQL instance optimized for LTE schema. It handles high-frequency accounting inserts and updates, ensuring that the `SESSION` and `SUBSCRIBER` tables are kept in sync with the live network state.
+
+* *Logging Engines*  
+`lte_auth_log` and `lte_reply_log` capture every transaction for auditability without impacting the database performance.
+
+== Conceptual Flow
+
+[source, pseudocode]
+----
+Incoming LTE Request
+    |
+    v
+Check Virtual Server (lte or ent_lte)
+    |
+    v
+Apply lte_auth_policy
+    |-- Set local Password = "dialog"
+    |-- Set Authorization status = OK
+    |
+    v
+Authorize Phase (Standard Checks)
+    |
+    v
+Authenticate Phase (PAP Verification)
+    |
+    v
+Log Request & Reply
+    |
+    v
+Issue Access-Accept
+----
