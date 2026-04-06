@@ -1,1 +1,0 @@
-= LTE (Long-Term Evolution) Documentation
