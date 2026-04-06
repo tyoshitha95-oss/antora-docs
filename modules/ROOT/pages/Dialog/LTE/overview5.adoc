@@ -1,0 +1,40 @@
+= LTE Authentication Overview
+:toc: left
+:toclevels: 3
+:icons: font
+:sectnums:
+
+== Introduction
+
+The Long Term Evolution (LTE) module provides AAA services for standard mobile broadband users. Unlike the Enterprise (ENT) or GPON modules, the LTE flow is designed for high-throughput, low-latency authentication, often leveraging hardware-based credentials or simplified "always-on" policies for specific APNs.
+
+== Key Objectives
+
+* Provide a dedicated entry point for pure LTE traffic via the `lte` virtual server.
+* Support shared entry with Enterprise traffic via the `ent_lte` virtual server, branching based on `Called-Station-Id` (APN).
+* Enforce normalized authentication policies that allow for seamless connectivity while maintaining detailed audit logs.
+* Integrated accounting for data usage tracking and session management via SQL.
+
+== Workflow Summary
+
+. *Request Entrance*  
+LTE requests enter either through the `lte` dedicated port or the shared `ent_lte` port.
+
+. *APN Verification*  
+If using the shared port, the system checks the `Called-Station-Id`. If it matches known LTE APNs (e.g., `dbnbb`, `dbnbbpre`), it follows the LTE logic path.
+
+. *Policy Application*  
+The `lte_auth_policy` is executed. This policy typically ensures a standardized `Cleartext-Password` (e.g., "dialog") is used for internal validation, simplifying the handshake for mobile devices.
+
+. *Database Interaction*  
+Authorization details are fetched and verified.
+
+. *Accounting Start*  
+Upon successful connection, a session is opened in the `lte_sql` database to track start time and IP assignment.
+
+. *Usage Monitoring*  
+Intermediate updates track octet counts.
+
+. *Session Closure*  
+Accounting Stop packets trigger session teardown and final data recording.
+

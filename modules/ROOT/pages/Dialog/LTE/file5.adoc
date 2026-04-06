@@ -1,0 +1,51 @@
+= File and Variable Reference
+:toc: left
+:toclevels: 3
+:icons: font
+:sectnums:
+
+== Core Files
+
+* *`sites-available/lte`*  
+**Purpose**: Dedicated RADIUS listener for pure LTE traffic.
+
+* *`sites-available/ent_lte`*  
+**Purpose**: Multi-tenant entry point that separates LTE and Enterprise traffic.
+
+* *`policy.d/lte_auth_policy`*  
+**Purpose**: Defines the internal password standard and basic reply attributes for LTE users.
+
+* *`modules/lte_sql`*  
+**Purpose**: SQL configuration for recording LTE specific accounting data.
+
+== Variable Reference Matrix
+
+=== `3GPP-IMSI`
+
+* *Source*: Sent by the UE via the SMF/SGSN.
+* *Purpose*: Unique identifier for the subscriber's SIM card.
+* *Usage*: Logged in `lte_auth_log` for tracking.
+
+=== `3GPP-IMEISV`
+
+* *Source*: Sent by the mobile device hardware.
+* *Purpose*: Identifies the specific physical device being used.
+* *Usage*: Used for device-level blocking or analysis.
+
+=== `Called-Station-Id` (APN)
+
+* *Source*: Mobile network APN configuration.
+* *Purpose*: Determines the service profile (e.g., `dbnbb` for broadband, `dbnbbpre` for prepaid).
+* *Logic*: Used in `ent_lte` to branch between LTE and Enterprise logic paths.
+
+=== `Cleartext-Password`
+
+* *Source*: Hardcoded in `lte_auth_policy`.
+* *Purpose*: Internal password used for PAP validation.
+* *Standard Value*: `dialog`
+
+=== `Framed-Address`
+
+* *Source*: Dynamic pool or SMF/GGSN reservation.
+* *Purpose*: The IP address assigned to the mobile session.
+* *Usage*: Recorded in SQL to map traffic back to a specific subscriber.

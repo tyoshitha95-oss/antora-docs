@@ -1,0 +1,37 @@
+= LTE Security Features
+:toc: left
+:toclevels: 3
+:icons: font
+:sectnums:
+
+== Overview
+
+The LTE module balances the need for rapid connection for mobile devices with the requirement for backend visibility and audit trails.
+
+== Layered Defense
+
+. *Hardware Validation (UE level)*  
+Authentication is primarily enforced at the Radio Access Network (RAN) level. Most LTE requests hitting this AAA have already passed SIM-based hardware checks.
+
+. *Internal Credential Standardization*  
+The `lte_auth_policy` uses a standardized internal password. This prevents external entities from attempting to guess subscriber passwords, as the "password" is an internal orchestration detail, not a user-definable field.
+
+. *Strict Attribute Filtering*  
+
+The `post-auth` block in the LTE server clears sensitive internal variables from the reply. This ensures that internal session states or database identifiers never leak back to the User Equipment (UE) or the public network.
+
+[source, pseudocode]
+----
+IF Internal-User-Name EXISTS:
+    REMOVE Internal-User-Name FROM Reply-Packet
+----
+
+. *Logging and Auditability*  
+
+* *lte_auth_log*: Captures detailed Request information (IMSI, IMEI, APN).  
+* *lte_reply_log*: Captures the exact Attributes sent back to the SMF/GGSN.  
+* *SQL Accounting*: Provides a permanent record of connection duration and volume, allowing for post-event forensic analysis of suspicious behavior.
+
+== Input Sanitization
+
+The system validates the `3GPP` vendor-specific attributes to ensure they conform to expected lengths and formats, preventing buffer overflow or injection attacks via malformed mobile network identifiers.

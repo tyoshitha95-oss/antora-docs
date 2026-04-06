@@ -1,0 +1,50 @@
+= Test Case: LTE Standard Authentication
+:toc: left
+:toclevels: 3
+:icons: font
+:sectnums:
+
+== Description
+
+Validates the standard authentication and accounting flow for a mobile broadband user connecting via the `dbnbb` APN. This test ensures the AAA correctly identifies LTE traffic, applies the simplified auth policy, and begins usage tracking.
+
+== Configuration Setup (Simulated via radclient/cURL)
+
+* *Subscriber ID*: `94812404502`
+* *APN (`Called-Station-Id`)*: `dbnbb`
+* *IMSI*: `413111400926027`
+* *NAS-Identifier*: `pili-smf02`
+
+== Authentication Walkthrough
+
+. *Access-Request Dispatch*  
+A packet arrives at the `ent_lte` port with `Called-Station-Id = "dbnbb"`.  
+The server recognizes the LTE APN and calls `lte_auth_policy`.
+
+. *Policy Execution*  
+The policy sets `Cleartext-Password = "dialog"`.
+
+. *Credential Matching*  
+The `pap` module compares the request password against the standardized "dialog" string.
+
+. *Acceptance*  
+The server issues an `Access-Accept` with the relevant 3GPP parameters and session limits.
+
+== Accounting Walkthrough
+
+. *Start Packet*  
+The SMF sends an `Accounting-Start` containing `Framed-Address = 10.69.141.235`.  
+The `lte_sql` module creates a new session record in the database.
+
+. *Interim Update*  
+Periodic updates (e.g., every 3600s) report usage.  
+Example: `Acct-Input-Octets = 209952657`, `Acct-Output-Octets = 658711202`.
+
+. *Stop Packet*  
+The session terminates. The AAA records the final octet counts and closes the session with a timestamped entry.
+
+----
+Final Session Stats:
+Duration: 48456s
+Total Octets: ~1.4GB
+----
