@@ -116,9 +116,6 @@
 **** xref:Dialog/LTE/testcases/std_auth.adoc[LTE Standard Authentication]
 
 
-
-
-
 ---
 
 * xref:Captive Portal Solution/CptStart.adoc[Captive Portal Solution]
