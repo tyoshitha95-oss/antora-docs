@@ -1,0 +1,35 @@
+= File and Variable Reference
+
+== Core Files
+
+* `sites-available/ent_lte`
+  ** **Purpose**: A dual-purpose routing listener that divides packets between pure LTE traffic and Enterprise LTE traffic based solely on the `Called-Station-Id` (the network APN).
+* `policy.d/ent_auth_policy`
+  ** **Purpose**: Normalizes enterprise packets and groups them into either `ENT1` (MSISDN identity) or `ENT2` (Corporate identity) for structured database queries.
+* `policy.d/barred_user_policy`
+  ** **Purpose**: Common post-auth blockage applied to suspended users.
+
+== Variable Reference Matrix
+
+=== `Group-ID`
+* **Purpose**: Determines the downstream validation flow.
+* **Dependency Tree**:
+  1. Originates as `NULL`.
+  2. In `ent_auth_policy`, if `User-Name` has `@` -> Set to `ENT2`.
+  3. If `User-Name` does not have `@` -> Set to `ENT1`.
+  4. Triggers `Framed-Address` conflict arbitration rules ONLY if `Group-ID` == "ENT1".
+
+=== `User-Name`
+* **Purpose**: Primary lookup key for the database engines.
+* **Dependency Tree**:
+  1. Sent by Client (`request:User-Name`).
+  2. If the user is `ENT1`, `User-Name` gets rewritten to `%{Calling-Station-Id}-%{Called-Station-Id}`.
+  3. If the user is `ENT2`, `User-Name` gets truncated to remove the domain suffix.
+  4. Stripped out during `post-auth` block to prevent internal identifier leak to network edge.
+
+=== `Framed-Address`
+* **Purpose**: Assigns the IP address to the tunnel endpoint.
+* **Dependency Tree**:
+  1. Sent by the client equipment (Router/SMF) OR sourced from the DB.
+  2. Compared inside `ent_auth_policy` for `ENT1` users.
+  3. Request > Database priority. If BOTH are present, the Request address overwrites the Database one. If both are absent, the auth flow halts completely (`reject`).
