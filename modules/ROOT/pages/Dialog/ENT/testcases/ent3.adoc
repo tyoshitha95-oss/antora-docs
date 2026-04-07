@@ -1,4 +1,4 @@
-= Test Case: ENT1 - Framed address is given by the AAA
+= Test Case: ENT3 - Framed address is given by the AAA
 
 == Description
 

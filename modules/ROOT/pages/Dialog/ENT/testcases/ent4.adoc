@@ -1,4 +1,4 @@
-= Test Case: ENT1 - Framed IP is sent by the SMF
+= Test Case: ENT4 - Framed IP is sent by the SMF
 
 == Description
 
