@@ -1,44 +1,38 @@
-= System Architecture
+= ENT System Architecture
 
-The AAA Enterprise system architecture consists of multiple integrated components working together to manage enterprise subscriber authentication and provisioning.
+== Core Components
 
-The primary components include:
+The ENT Architecture shares its entry block with LTE to consolidate port listening:
 
-* Dialog CRM System  
-* AAA Server (Authentication, Authorization, Accounting)  
-* Network Access Servers (Huawei PGW, Cisco LNS/ASR)  
-* Backend Data Store (User Profiles)  
-* BI Systems for CDR processing  
+1. **Virtual Server Context (`ent_lte`)**:
+   The `ent_lte` server blocks port traffic and acts as a router. By reading the `Called-Station-Id` (which maps to the APN the client is connecting over), the system explicitly bypasses LTE logic to load `ent_auth_policy` and `ent_log`.
 
-The CRM system acts as the provisioning source. It sends subscriber data to AAA using Add/Update APIs.
+2. **Authentication Policy (`ent_auth_policy`)**:
+   A heavily tailored logic script that normalizes input (removing spaces and invalid characters). It features an internal fork (ENT1 vs ENT2) depending on if the user authenticates with an ID card (domain-based username) or implicitly through their equipment (SIM MSISDN numbers).
 
-The AAA system processes these requests and stores user profiles with all required parameters such as UserID, password, routing fields, QoS templates, and barring status.
+3. **Accounting Splitter**:
+   Depending on if it is ENT or LTE, the accounting block dispatches either to `ent_accounting` or `lte_accounting`. For ENT1 specifically, it executes IMEI binding policies `dynamic_cell` and `msisdn_imei` to anchor the device identity cryptographically.
 
-During authentication, network devices (PGW or LNS) send RADIUS requests to AAA.
+== Database Tools
 
-For framed route-based users, AAA extracts MSISDN and APN from AVPs and constructs the user identity. It then validates username and password.
+* **ENT SQL (`ent_sql`)**: Validates the processed Username string. Because ENT1 and ENT2 require drastically different string structures (e.g. `94123456789-corporateapn` vs `user`), the SQL engine must match whichever string is handed over by the policy layer.
 
-For router-based users, AAA extracts the username (removing domain if present) and validates it directly against stored credentials.
+== Flow Diagram (Conceptual)
 
-Upon successful authentication, AAA responds with routing attributes such as:
+[source, pseudocode]
+----
+Incoming Request (ent_lte site)
+  --> Is APN in LTE list? 
+       Yes: Route to LTE policy
+       No:  Route to ENT policy
 
-* VRF name  
-* Loopback name  
-* Framed-IP  
-* Framed-Route  
-* QoS templates  
-* Sub-template rules  
-
-These attributes are sent using vendor-specific AVPs depending on the NAS device.
-
-Accounting requests (Tunnel-Link Start/Stop) are sent to AAA and recorded as CDR/EDR entries.
-
-These records are stored in flat files and shared with BI systems daily via SFTP.
-
-The system does not maintain online sessions for enterprise users except for LTE-specific scenarios.
-
-The architecture ensures separation between provisioning, authentication, and accounting layers.
-
-It also supports high scalability and integration with multiple network vendors.
-
-Overall, the architecture enables real-time provisioning, secure authentication, and accurate usage tracking.
+[Inside ENT Policy]
+  --> Validate Username formatting
+  --> Does Username have '@'?
+       Yes: Strip everything after '@'. Set Group-ID = "ENT2"
+       No: Set Username = MSISDN + '-' + APN. Set Group-ID = "ENT1"
+  --> Query Database (ent_sql)
+  --> Validate against PAP
+  --> Resolve Framed-Address overlaps
+  --> Issue ACCEPT
+----
