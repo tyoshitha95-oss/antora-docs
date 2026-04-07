@@ -1,0 +1,36 @@
+= Test Case: ENT1 - Framed address is given by the AAA
+
+== Description
+
+The table below illustrates the API field mappings used in the AAA (Authentication, Authorization, and Accounting) response. Specifically, the Framed IP Address and Framed Route values are dynamically retrieved from the Database (DB) and returned as part of the AAA response.
+
+API field                       Value
+
+Username                    dialog
+APN                         ltel2fr2
+user notes                  Nvision
+framed Route                100.213.92.128/30
+MSISDN                      940812404795
+Framed Ip address           198.23.89.10
+Password                    dialog123
+user Group                  ENT1
+
+Packet for Request
+
+ echo -e 'Packet-Type = Access-Request\nUser-Name = "dialog"\nUser-Password = "dialog123"\nNAS-Port-Type = Virtual\nCalling-Station-Id = "94812404130"\nCalled-Station-Id = "test"\nService-Type = Framed-User\nFramed-Protocol = GPRS-PDP-Context\nEvent-Timestamp = "May  9 2025 12:12:23 +0530"\nAcct-Multi-Session-Id = "05117a83"\n 3GPP-IMEISV = "3575000434020700"' | radclient -x 10.58.167.84 auth mysecret		
+
+
+Packet for Accounting Start
+
+echo -e 'Acct-Status-Type = Start\nAcct-Authentic = RADIUS\nAcct-Delay-Time = 0\nAcct-Multi-Session-Id = "8cf71228"\nCalling-Station-Id = "94812404130"\nFramed-Address = 198.23.89.10\nAcct-Session-Id = "abc"\nFramed-Protocol = 7\nCalled-Station-Id = "test"\nNAS-Identifier = "AKB-UGW9811"\nUser-Name = "dialog"\n3GPP-IMSI = "413111400437001"\nUser-Service-Type = Framed-User\nNAS-Port-Type = Virtual\n3GPP-IMEISV = "3575000434020700"' | radclient -x 10.62.167.102  acct mysecret		
+
+
+Packet for Interim-update
+
+echo -e 'Acct-Status-Type = Interim-Update\nAcct-Input-Octets = 1302968148\nAcct-Output-Octets = 2713736443\nAcct-Input-Gigawords = 13\nAcct-Output-Gigawords = 8\nAcct-Authentic = RADIUS\nAcct-Delay-Time = 0\nAcct-Session-Time = 9547201\nAcct-Multi-Session-Id = "3c534d6f"\nCalling-Station-Id = "94812404103"\nFramed-Address = 198.23.89.10\nAcct-Session-Id = "abc"\nFramed-Protocol = 7\nCalled-Station-Id = "test"\nNAS-Identifier = "AKB-UGW9811"\nUser-Name = "dialog"\nUser-Service-Type = Framed-User\nNAS-Port-Type = Virtual' | radclient -x 10.58.167.84  acct mysecret		
+
+Packet for Stop
+
+echo -e 'Acct-Status-Type = Stop\nAcct-Terminate-Cause = 1\nAcct-Input-Octets = 8315730\nAcct-Output-Octets = 43857263\nAcct-Authentic = RADIUS\nAcct-Delay-Time = 0\nAcct-Session-Time = abc\nAcct-Multi-Session-Id = "8cf71228"\nCalling-Station-Id = "94812404103"\nFramed-Address = 10.223.113.33\nAcct-Session-Id = "abc"\nFramed-Protocol = 7\nCalled-Station-Id = "test"\nNAS-Identifier = "AKB-UGW9811"\nUser-Name = "dialog"\nUser-Service-Type = Framed-User\nNAS-Port-Type = Virtual' | radclient -x 10.58.167.84 acct mysecret		
+
+
