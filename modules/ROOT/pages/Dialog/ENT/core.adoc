@@ -1,0 +1,63 @@
+= Core Function Analysis - Loogic
+
+== Main Entry Point (`sites-available/ent_lte`)
+
+Within the shared Virtual Server block, the ENT logic strictly enforces password checks using `pap`, unlike the LTE block which allows for simple `ok` passthroughs.
+
+[source, pseudocode]
+----
+// Inside site-available
+FUNCTION Authenticate():
+    IF APN matches LTE:
+        ACCEPT (handled upstream)
+    ELSE (ENT Traffic):
+        EXECUTE pap authentication block
+        IF pap fails:
+            REJECT "Password failure"
+----
+
+== Authentication Handler (`policy.d/ent_auth_policy`)
+
+This policy breaks the traffic into two different processing pipes to account for disparate corporate systems.
+
+=== Initial Authentication & Normalization
+
+Initially, it drops blank usernames, missing passwords, spaces, double dots `..`, and trailing/leading dots.
+
+=== Core Group Definition (Service Authentication)
+
+The core logical operation involves constructing the canonical identifier for the database:
+
+[source, pseudocode]
+----
+FUNCTION Construct_User_Profile():
+    IF User-Name CONTAINS '@':
+        EXTRACT string BEFORE '@'
+        SET Group-ID to "ENT2"
+    ELSE:
+        // Build identity from hardware constraints
+        IF MSISDN AND APN are present in request properties:
+            STORE original username in Request-UN
+            User-Name = MSISDN + "-" + APN
+            SET Group-ID to "ENT1"
+        ELSE:
+            REJECT "Missing Calling-Station-Id or Called-Station-Id"
+----
+
+=== Address Resolution Logic
+
+One of the most complex portions is deciding whether to use the IP address returned by the AAA Database or the IP requested by the router (SMF/BNG).
+
+[source, pseudocode]
+----
+IF Group-ID == "ENT1":
+    IF Database HAS Framed-Address AND Request HAS Framed-Address:
+        USE Request Framed-Address
+    ELSE IF DATABASE HAS Framed-Address:
+        USE Database Framed-Address
+    ELSE IF REQUEST HAS Framed-Address:
+        USE Request Framed-Address
+    ELSE:
+        REJECT "Framed-Address missing in both database and request"
+----
+
