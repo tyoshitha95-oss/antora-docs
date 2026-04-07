@@ -41,3 +41,34 @@ Incoming Request
   -->  [Post-Auth: Check if Simultaneous Sessions = 1]
   -->  Response (Accept/Reject)
 ----
+
+[mermaid]
+----
+sequenceDiagram
+    participant Client
+    participant NAS
+    participant AAA
+    participant DB
+
+    Client->>NAS: Request
+    NAS->>AAA: Access-Request
+
+    AAA->>AAA: Check Username Syntax
+    AAA->>AAA: Extract Digits (94xxxxxxxxx)
+
+    AAA->>DB: Lookup User
+    DB-->>AAA: User Record
+
+    AAA->>AAA: CHAP Validation
+
+    AAA->>AAA: Check Barred = 0
+    AAA->>AAA: Check Simultaneous Sessions = 1
+
+    alt Valid User
+        AAA-->>NAS: Access-Accept
+    else Invalid / Blocked
+        AAA-->>NAS: Access-Reject
+    end
+
+    NAS-->>Client: Response
+----
