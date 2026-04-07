@@ -1,31 +1,131 @@
-= Test Case: ENT4 - Framed IP is sent by the SMF
+= Framed IP is sent by the SMF
 
 == Description
 
-the Framed IP Address value is picked directly from the incoming Access-Request packet sent by the SMF — the AAA server simply reads it from the request and echoes it back in the Access-Accept response.
+The Framed IP Address value is picked directly from the incoming Access-Request packet sent by the SMF — the AAA server simply reads it from the request and echoes it back in the Access-Accept response.
 
-API field                       Value
+== API Field Mapping
 
-Username                    dialog
-VRF name                    ltel2fr2
-loopback name               loopback
-APN                         ltel2fr2
-MSISDN                      940812404795
-user group                  ENT1
-Password                    dialog123
+[cols="1,1", options="header"]
+|===
+|API Field |Value
 
-Request packet
+|Username
+|dialog
 
-echo -e 'Packet-Type = Access-Request\nUser-Name = "dialog"\nUser-Password = "dialog123"\nClient-Id = 10.174.226.80\nUser-Service-Type = Framed-User\nFramed-Protocol = 7\nCalled-Station-Id = "test"\nCalling-Station-Id = "94812404110"\nAcct-Multi-Session-Id = "01c2dd37"\nFramed-Address = 198.23.89.12\nEvent-Timestamp = 1745882480\nNAS-Port-Type = Virtual' | radclient -x 10.58.167.86 auth mysecret		
+|VRF name
+|ltel2fr2
 
-Accounting start packet
+|loopback name
+|loopback
 
-echo -e 'Acct-Status-Type = Start\nAcct-Link-Count = 1\nEvent-Timestamp = 1745895750\nAcct-Authentic = RADIUS\nAcct-Delay-Time = 0\nAcct-Multi-Session-Id = "3dc2e53f"\nCalling-Station-Id = "94812404106"\nFramed-Address = 10.164.1.74\nAcct-Session-Id = "ca45c4b03dc2e53f"\nFramed-Protocol = 7\nCalled-Station-Id = "test"\nUser-Name = "dialog"\nUser-Service-Type = Framed-User\nNAS-Port-Type = Virtual' | radclient -x 10.58.167.86 acct mysecret		
+|APN
+|ltel2fr2
 
-Accounting interim update
+|MSISDN
+|940812404795
 
-echo -e 'Acct-Status-Type =  Interim-Update\nAcct-Input-Octets = 735035\nAcct-Output-Octets = 3451792\nAcct-Input-Packets = 5830\nAcct-Output-Packets = 5473\nAcct-Link-Count = 1\nEvent-Timestamp = 1745896478\nAcct-Authentic = RADIUS\nAcct-Delay-Time = 0\nAcct-Session-Time = 727\nAcct-Multi-Session-Id = "3dc2e53f"\nCalling-Station-Id = "94812404106"\nFramed-Address = 10.164.1.74\nAcct-Session-Id = "ca45c4b03dc2e53f"\nFramed-Protocol = 7\nCalled-Station-Id = "test"\nUser-Name = "dialog"\nUser-Service-Type = Framed-User\nNAS-Port-Type = Virtual' | radclient -x 10.58.167.86 acct mysecret		
+|user group
+|ENT1
 
-Accounting Stop
+|Password
+|dialog123
+|===
 
-echo -e 'Acct-Status-Type =  stop\nAcct-Input-Octets = 735035\nAcct-Output-Octets = 3451792\nAcct-Input-Packets = 5830\nAcct-Output-Packets = 5473\nAcct-Link-Count = 1\nEvent-Timestamp = 1745896478\nAcct-Authentic = RADIUS\nAcct-Delay-Time = 0\nAcct-Session-Time = 727\nAcct-Multi-Session-Id = "3dc2e53f"\nCalling-Station-Id = "94812404106"\nFramed-Address = 10.164.1.74\nAcct-Session-Id = "ca45c4b03dc2e53f"\nFramed-Protocol = 7\nCalled-Station-Id = "test"\nUser-Name = "dialog"\nUser-Service-Type = Framed-User\nNAS-Port-Type = Virtual' | radclient -x 10.58.167.86 acct mysecret		
+== Packets
+
+=== Request packet
+
+====
+[source,bash]
+----
+echo -e 'Packet-Type = Access-Request
+User-Name = "dialog"
+User-Password = "dialog123"
+Client-Id = 10.174.226.80
+User-Service-Type = Framed-User
+Framed-Protocol = 7
+Called-Station-Id = "test"
+Calling-Station-Id = "94812404110"
+Acct-Multi-Session-Id = "01c2dd37"
+Framed-Address = 198.23.89.12
+Event-Timestamp = 1745882480
+NAS-Port-Type = Virtual' | radclient -x 10.58.167.86 auth mysecret
+----
+====
+
+=== Accounting start packet
+
+====
+[source,bash]
+----
+echo -e 'Acct-Status-Type = Start
+Acct-Link-Count = 1
+Event-Timestamp = 1745895750
+Acct-Authentic = RADIUS
+Acct-Delay-Time = 0
+Acct-Multi-Session-Id = "3dc2e53f"
+Calling-Station-Id = "94812404106"
+Framed-Address = 10.164.1.74
+Acct-Session-Id = "ca45c4b03dc2e53f"
+Framed-Protocol = 7
+Called-Station-Id = "test"
+User-Name = "dialog"
+User-Service-Type = Framed-User
+NAS-Port-Type = Virtual' | radclient -x 10.58.167.86 acct mysecret
+----
+====
+
+=== Accounting interim update
+
+====
+[source,bash]
+----
+echo -e 'Acct-Status-Type = Interim-Update
+Acct-Input-Octets = 735035
+Acct-Output-Octets = 3451792
+Acct-Input-Packets = 5830
+Acct-Output-Packets = 5473
+Acct-Link-Count = 1
+Event-Timestamp = 1745896478
+Acct-Authentic = RADIUS
+Acct-Delay-Time = 0
+Acct-Session-Time = 727
+Acct-Multi-Session-Id = "3dc2e53f"
+Calling-Station-Id = "94812404106"
+Framed-Address = 10.164.1.74
+Acct-Session-Id = "ca45c4b03dc2e53f"
+Framed-Protocol = 7
+Called-Station-Id = "test"
+User-Name = "dialog"
+User-Service-Type = Framed-User
+NAS-Port-Type = Virtual' | radclient -x 10.58.167.86 acct mysecret
+----
+====
+
+=== Accounting Stop
+
+====
+[source,bash]
+----
+echo -e 'Acct-Status-Type = stop
+Acct-Input-Octets = 735035
+Acct-Output-Octets = 3451792
+Acct-Input-Packets = 5830
+Acct-Output-Packets = 5473
+Acct-Link-Count = 1
+Event-Timestamp = 1745896478
+Acct-Authentic = RADIUS
+Acct-Delay-Time = 0
+Acct-Session-Time = 727
+Acct-Multi-Session-Id = "3dc2e53f"
+Calling-Station-Id = "94812404106"
+Framed-Address = 10.164.1.74
+Acct-Session-Id = "ca45c4b03dc2e53f"
+Framed-Protocol = 7
+Called-Station-Id = "test"
+User-Name = "dialog"
+User-Service-Type = Framed-User
+NAS-Port-Type = Virtual' | radclient -x 10.58.167.86 acct mysecret
+----
+====

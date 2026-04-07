@@ -1,4 +1,4 @@
-= Test Case: ENT1 - MSISDN Authentication
+= ENT1: MSISDN Authentication
 
 == Description
 Test the Enterprise mapping where the corporate system relies specifically on the hardware MSISDN coupled with the APN, forcing the RADIUS server to build a compound authentication key to interact with the backend Database.

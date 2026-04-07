@@ -1,58 +1,147 @@
-= Test Case: ENT2 - Username Authentication
+= ENT2: Username Authentication
 
 == Description
-Validates the scenario where Enterprise employees use isolated User/Password schemas tied to Domain identifiers (like `user@dialog.lk`).
+Validates Enterprise user authentication using `user@domain` format.
+The system extracts the username and maps it to a specific group and policy.
 
-== Configuration Setup (Simulated via cURL/API)
-
-* **Account Type**: `ENT2`
-* **Trigger Mechanism**: Username contains `@`.
-* **Requested Username**: `dialog@corporate.lk`
-* **Password**: `dialog123`
+== Configuration Setup
+* *Account Type*: `ENT2`
+* *Trigger*: Username contains `@`
+* *Requested Username*: `dialog@corporate.lk`
+* *Password*: `dialog123`
 
 == Expected Execution Logic
-1. Request arrives. Username contains `@`.
-2. Router parses out the string. Sets `User-Name = dialog`.
-3. Sets Group-ID to `ENT2`.
-4. Executes Database check for User `dialog`.
-5. Strictly matches `pap` layer.
-6. Applies QoS profiles (e.g., `4M_BRONZE_T1_POLICE`) attached in the Vendor specific data tables upon Accounting Start.
+[cols="1,4", options="header"]
+|===
+|Step |Description
 
+|1
+|Request received with `@` in username
 
-Attributes for DB
+|2
+|System parses username → `dialog`
 
-username                dialog
-VRF name                LTE_LNS_FR
-loopback name           loopback 200
-APN                     ltel2fr2
-user notes              Nvision
-framed route            10.223.92.128/30
-MSISDN                  940812404795
-framed IP address       198.23.89.10
-password                dialog123
-user group              ENT2
-input qos template      4M_BRONZE_T1_POLICE
-output qos template     4M_BRONZE_T1_SHAPE
+|3
+|Assigns `Group-ID = ENT2`
 
+|4
+|Performs DB lookup for user
 
-Request packet
+|5
+|Validates using PAP authentication
 
-echo -e 'Packet-Type = Access-Request\nFramed-Protocol = PPP\nUser-Name = "94812404134@dialogvpn.lk"\nUser-Password = "dialog123"\nConnect-Info = "1000000000"\nNAS-Port-Type = Async\nCisco-NAS-Port = "Uniq-Sess-ID4891"\nClient-Port-Id = 4891\nNAS-Port-Id = "Uniq-Sess-ID4891"\nUser-Service-Type = Framed-User\nCalling-Station-Id = "94234112885"\nCalled-Station-Id = "dummy"\nClient-Id = 10.174.133.96' | radclient -x  10.58.167.84 auth mysecret		
+|6
+|Applies QoS profile during Accounting Start
 
-Accounting start
+|===
 
-echo -e 'Acct-Status-Type = Start\nAcct-Session-Id = ""00419BB3""\nAcct-Tunnel-Connection = ""1""\nTunnel-Type = L2TP\nTunnel-Medium-Type = IPv4\nAcct-Multi-Session-Id = ""00419BB0""\nFramed-Protocol = PPP\nTunnel-Server-Endpoint = ""10.210.8.192""\nTunnel-Client-Endpoint = ""10.188.72.107""\nTunnel-Assignment-ID = ""UPLC_LNS_LTE_L3_DATA_QCI4""\nUser-Name = ""0812404112@dialogvpn.lk""\ncisco-avpair = ""connect-progress=Call Up""\nAcct-Authentic = Local\nConnect-Info = ""1000000000""\nNAS-Port-Type = Async\nCisco-NAS-Port = ""Uniq-Sess-ID4891""\nClient-Port-Id = 4891\nNAS-Port-Id = ""Uniq-Sess-ID4891""\nUser-Service-Type = Framed-User\nCalling-Station-Id = ""081240420""\nCalled-Station-Id = ""dummy""\nClient-Id = 10.174.133.96\nAcct-Delay-Time = 0' | radclient -x 10.58.167.86 acct mysecret
-		
+== Attributes for DB
+[cols="1,2", options="header"]
+|===
+|Attribute |Value
 
-Accounting interim-update
+|Username
+|dialog
 
-echo -e 'Acct-Status-Type = Interim-Update\nAcct-Session-Id = ""00419BB3""\nAcct-Tunnel-Connection = ""1""\nTunnel-Type = L2TP\nTunnel-Medium-Type = IPv4\nAcct-Multi-Session-Id = ""00419BB1""\nFramed-Protocol = PPP\nTunnel-Server-Endpoint = ""10.210.8.192""\nTunnel-Client-Endpoint = ""10.188.72.107""\nTunnel-Assignment-ID = ""UPLC_LNS_LTE_L3_DATA_QCI4""\nUser-Name = ""0812404112@dialogvpn.lk""\ncisco-avpair = ""connect-progress=Call Up""\nAcct-Authentic = Local\nConnect-Info = ""1000000000""\nNAS-Port-Type = Async\nCisco-NAS-Port = ""Uniq-Sess-ID4891""\nClient-Port-Id = 4891\nNAS-Port-Id = ""Uniq-Sess-ID4891""\nAcct-Session-Time = 9547200\nUser-Service-Type = Framed-User\nCalling-Station-Id = ""940812404917""\nCalled-Station-Id = ""dummy""\nClient-Id = 10.174.133.96\nAcct-Delay-Time = 0' | radclient -x 10.58.167.86 acct mysecret
-	
-Accounting stop
+|VRF Name
+|LTE_LNS_FR
 
-echo -e 'Acct-Status-Type =Stop\nAcct-Session-Id = ""00419BB3""\nAcct-Tunnel-Connection = ""1""\nTunnel-Type = L2TP\nTunnel-Medium-Type = IPv4\nAcct-Multi-Session-Id = ""00419BB1""\nFramed-Protocol = PPP\nTunnel-Server-Endpoint = ""10.210.8.192""\nTunnel-Client-Endpoint = ""10.188.72.107""\nTunnel-Assignment-ID = ""UPLC_LNS_LTE_L3_DATA_QCI4""\nUser-Name = ""0812404112@dialogvpn.lk""\ncisco-avpair = ""connect-progress=Call Up""\nAcct-Authentic = Local\nConnect-Info = ""1000000000""\nNAS-Port-Type = Async\nCisco-NAS-Port = ""Uniq-Sess-ID4891""\nClient-Port-Id = 4891\nNAS-Port-Id = ""Uniq-Sess-ID4891""\nAcct-Session-Time = 9547200\nUser-Service-Type = Framed-User\nCalling-Station-Id = ""81240420""\nCalled-Station-Id = ""dummy""\nClient-Id = 10.174.133.96\nAcct-Delay-Time = 0' | radclient -x 10.58.167.86 acct mysecret
+|Loopback Name
+|loopback 200
 
+|APN
+|ltel2fr2
 
+|User Notes
+|Nvision
 
+|Framed Route
+|10.223.92.128/30
 
+|MSISDN
+|940812404795
 
+|Framed IP Address
+|198.23.89.10
+
+|Password
+|dialog123
+
+|User Group
+|ENT2
+
+|Input QoS Template
+|4M_BRONZE_T1_POLICE
+
+|Output QoS Template
+|4M_BRONZE_T1_SHAPE
+
+|===
+
+== RADIUS Simulation
+
+===  Access Request
+
+====
+[source,bash]
+----
+echo -e 'Packet-Type = Access-Request
+Framed-Protocol = PPP
+User-Name = "94812404134@dialogvpn.lk"
+User-Password = "dialog123"
+Connect-Info = "1000000000"
+NAS-Port-Type = Async
+Cisco-NAS-Port = "Uniq-Sess-ID4891"
+Client-Port-Id = 4891
+NAS-Port-Id = "Uniq-Sess-ID4891"
+User-Service-Type = Framed-User
+Calling-Station-Id = "94234112885"
+Called-Station-Id = "dummy"
+Client-Id = 10.174.133.96' | radclient -x 10.58.167.84 auth mysecret
+----
+====
+
+===  Accounting Start
+
+====
+[source,pseudocode]
+----
+echo -e 'Acct-Status-Type = Start
+Acct-Session-Id = "00419BB3"
+Tunnel-Type = L2TP
+Tunnel-Medium-Type = IPv4
+User-Name = "0812404112@dialogvpn.lk"
+Tunnel-Server-Endpoint = "10.210.8.192"
+Tunnel-Client-Endpoint = "10.188.72.107"
+QoS = 4M_BRONZE_T1_POLICE
+Session = Initiated' | radclient -x 10.58.167.86 acct mysecret
+----
+====
+
+===  Interim Update
+
+====
+[source,pseudocode]
+----
+echo -e 'Acct-Status-Type = Interim-Update
+Acct-Session-Id = "00419BB3"
+Session-Time = 9547200
+User-Name = "0812404112@dialogvpn.lk"
+Usage = Updated
+QoS = Maintained' | radclient -x 10.58.167.86 acct mysecret
+----
+====
+
+===  Accounting Stop
+
+====
+[source,pseudocode]
+----
+echo -e 'Acct-Status-Type = Stop
+Acct-Session-Id = "00419BB3"
+Session-Time = 9547200
+User-Name = "0812404112@dialogvpn.lk"
+Session = Terminated
+Final-Usage = Recorded' | radclient -x 10.58.167.86 acct mysecret
+----
+====
