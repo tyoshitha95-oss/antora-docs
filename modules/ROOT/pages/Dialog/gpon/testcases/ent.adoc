@@ -1,75 +1,53 @@
-= Enterprise VPN Profile Test Case
+= Test Case: Enterprise VPN Profile
 :toc: left
 :toclevels: 3
 :icons: font
 :sectnums:
 
-== Overview
-This test case validates authentication and mapping logic for a **GPON subscriber** requiring a dedicated **Enterprise VPN routing configuration**.
+== Description
 
-The system enforces:
-- VRF-based isolation
-- Static IP assignment
-- Session control policies
+Validates the authentication and mapping logic for a GPON subscriber requiring a dedicated Enterprise VPN routing configuration. This involves applying specific VRF (Virtual Routing and Forwarding) contexts and assigning a precise static IP within that VRF.
 
-TIP: This ensures enterprise users are routed through a secure and isolated network tunnel.
+== Configuration Mapping
 
-== Configuration Summary
+The following parameters are supplied to the AAA backend to map the Enterprise VRF:
 
-[cols="1,2", options="header"]
+[cols="1,2",options="header"]
 |===
-| Parameter | Value
+| Field | Value
 
 | Endpoint ID
 | `94666543214`
 
-| Authentication Password
+| Authentication Match
 | `MySecurePass123`
 
 | Assigned Group
 | `GPON`
 
-| VRF Context
+| customfield3 (VRF Context Name)
 | `vrfValue`
 
-| Routed Subnet
+| customfield15 (Routed Subnet Details)
 | `192.168.1.100/20`
-
-| Assigned IP
-| `192.168.1.100`
-
-| Session Limit
-| `300`
-
-| Barring Status
-| `0` (Unbarred)
-
-| Status
-| `1` (Active)
-|===
-
-== Session Attributes
-
-[cols="1,2", options="header"]
-|===
-| Attribute | Value
-
-| customfield3
-| VRF Context (`vrfValue`)
-
-| customfield15
-| Subnet (`192.168.1.100/20`)
 
 | customnumfield1
 | `150`
 
-| userip
+| userip (Assigned Endpoint IP)
 | `192.168.1.100`
+
+| sessionlimit
+| `300`
+
+| barringstatus
+| `0` (Unbarred - Allowed)
+
+| status
+| `1` (Active)
 |===
 
-NOTE: These attributes are passed to the AAA backend for policy enforcement.
-
-== API Test Request
+== Test Implementation Request
 
 [source, bash]
 ----
@@ -87,114 +65,35 @@ curl --location --request PUT 'http://localhost:4000/users/94666543214' \
 --data-urlencode 'status=1'
 ----
 
-TIP: This request updates subscriber attributes and triggers AAA mapping logic.
+== Expected Result
 
-== Expected RADIUS Behavior
+The RADIUS payload returned will carry Vendor-Specific Attributes (VSAs) corresponding to `customfield3` acting as the VRF identifier over the BNG, forcing the remote session into an isolated routing tunnel.
 
-=== Access Request (Input Packet)
-
-[%collapsible]
-====
 [source, bash]
 ----
-echo -e 'Packet-Type = Access-Request
-User-Name = "94100200900"
-CHAP-Password =dialog
-CHAP-Challenge = 0x3c16fd3376dc4415c25ee1a1aca9dcdf
-NAS-Port = 2138182
-NAS-IP-Address = 10.174.157.1
-Service-Type = Framed-User
-Framed-Protocol = PPP
-Calling-Station-Id = "78:17:be:16:67:2a"
-NAS-Identifier = "MALA-B-HW-BNG-01"
-NAS-Port-Type = Ethernet
-NAS-Port-Id = "UNION_PLACE-CMBC-GPA03-R1-N1-01"
-Acct-Session-Id = "111125"
-Connect-Info = "1000000000"
-Huawei-Domain-Name = "dialog_test"
-' | radclient -x localhost:1812 auth mysecret
+echo -e 'Packet-Type = Access-Request\nUser-Name = "94100200900"\nCHAP-Password =dialog \nCHAP-Challenge = 0x3c16fd3376dc4415c25ee1a1aca9dcdf\nNAS-Port = 2138182\nNAS-IP-Address = 10.174.157.1\nService-Type = Framed-User\nFramed-Protocol = PPP\nCalling-Station-Id = "78:17:be:16:67:2a"\nNAS-Identifier = "MALA-B-HW-BNG-01"\nNAS-Port-Type = Ethernet\nNAS-Port-Id = "\015UNION_PLACE-CMBC-GPA03-R1-N1-01 xpon 0/1/0/12:4.1.502=02"\nAcct-Session-Id = "111125"\nConnect-Info = "1000000000"\nHuawei-Startup-Stamp = 1722845152\nHuawei-IPHost-Addr = "255.255.255.255 78:17:be:16:67:2a"\nHuawei-Connect-ID = 46086\nHuawei-Version = "Huawei NetEngine 8000"\nHuawei-Product-ID = "NetEngine 8000"\nHuawei-Domain-Name = "dialog_test"\nHuawei-User-Mac = "78:17:be:16:67:2a"\nADSL-Agent-Circuit-Id = 0x554e494f4e5f504c4143452d434d42432d47504130332d52312d4e312d30312078706f6e20302f312f302f31323a342e312e353032\nAccess-Loop-Encapsulation = 0x000000'| radclient -x  localhost:1812 auth mysecret	
 ----
-====
 
-=== Access Accept (Output Packet)
-
-[%collapsible]
-====
 [source]
 ----
-Received Access-Accept Id 10 from 127.0.0.1:1812
-User-Name = "94100200902"
-Session-Timeout = 300
-Idle-Timeout = 150
-Framed-IP-Netmask = 255.255.255.255
-Framed-IP-Address = 192.168.1.1
-Huawei-Domain-Name = "vrfvalue"
-Reply-Message = "Access Accept"
+Received Access-Accept Id 10 from 127.0.0.1:1812 to 127.0.0.1:54242 length 106
+	Message-Authenticator = 0x1f6d9f7566706745142b3f5e4b217a49
+	User-Name = "94100200902"
+	Session-Timeout = 300
+	Idle-Timeout = 150
+	Framed-IP-Netmask = 255.255.255.255
+	Framed-IP-Address = 192.168.1.1
+	Huawei-Domain-Name = "vrfvalue"
+	Reply-Message = "Access Accept"
 ----
-====
 
-IMPORTANT: The `Huawei-Domain-Name` reflects the VRF mapping applied.
-
-== Database Verification
-
-=== Subscriber Record
-
-[%collapsible]
-====
 [source, sql]
 ----
-SELECT * FROM SUBSCRIBER WHERE USER_ID='94100200902';
+mysql> select * from SUBSCRIBER where USER_ID='94100200902';
++-------+-------------+---------------------------------------------------+---------+---------+----------+---------------+----------------+----------------+-------------+----------------+----------------+------------------+-----------------+--------------------------+-----------------+--------------+---------+----------------+-------------------------------+--------+-----------+--------------------+---------------------+--------------+--------+------+-----------+-----------------+---------------------+---------------------+
+| id    | USER_ID     | PASSWORD                                          | PCRF_ID | PACKAGE | VRF_NAME | LOOPBACK_NAME | IPV4_POOL_NAME | IPV6_POOL_NAME | IPV4_VALUE  | IPV6_LAN_VALUE | IPV6_WAN_VALUE | FRAMED_ROUTE     | FRAMEDIPNETMASK | MAX_SIMULTANEOUS_SESSION | SESSION_TIMEOUT | IDLE_TIMEOUT | GROUPID | BARRING_STATUS | NOTES                         | STATUS | FRAMED_ID | INPUT_QOS_TEMPLATE | OUTPUT_QOS_TEMPLATE | SUB_TEMPLATE | MSISDN | APN  | USER_NAME | CREATE_USER     | CREATE_DATE         | LAST_UPDATE         |
++-------+-------------+---------------------------------------------------+---------+---------+----------+---------------+----------------+----------------+-------------+----------------+----------------+------------------+-----------------+--------------------------+-----------------+--------------+---------+----------------+-------------------------------+--------+-----------+--------------------+---------------------+--------------+--------+------+-----------+-----------------+---------------------+---------------------+
+| 16836 | 94100200902 | XCWW/OCw5zl0g5wFU49tBA==:vLsYxSjJmX6h5sR4jJOUow== |         |         | vrfvalue |               |                |                | 192.168.1.1 |                |                | 192.168.1.100/20 | 255.255.255.255 |                        1 |             300 |          150 | GPON    |              0 | Testing Purpose - Enterprise  |      1 | NULL      |                    |                     |              |        |      |           | Manudi_12345678 | 2026-03-18 17:18:50 | 2026-03-18 17:18:50 |
++-------+-------------+---------------------------------------------------+---------+---------+----------+---------------+----------------+----------------+-------------+----------------+----------------+------------------+-----------------+--------------------------+-----------------+--------------+---------+----------------+-------------------------------+--------+-----------+--------------------+---------------------+--------------+--------+------+-----------+-----------------+---------------------+---------------------+
+1 row in set (0.00 sec)
 ----
-====
-
-=== Result
-
-[cols="1,2", options="header"]
-|===
-| Field | Value
-
-| USER_ID
-| `94100200902`
-
-| VRF_NAME
-| `vrfvalue`
-
-| IPV4_VALUE
-| `192.168.1.1`
-
-| FRAMEDIPNETMASK
-| `255.255.255.255`
-
-| FRAMED_ROUTE
-| `192.168.1.100/20`
-
-| SESSION_TIMEOUT
-| `300`
-
-| IDLE_TIMEOUT
-| `150`
-
-| BARRING_STATUS
-| `0`
-
-| STATUS
-| `1`
-|===
-
-TIP: This confirms that the subscriber is correctly mapped and activated.
-
-== Validation Checklist
-
-- [x] Authentication successful
-- [x] VRF mapping applied
-- [x] Static IP assigned
-- [x] Session limits enforced
-- [x] Subscriber status active
-- [x] Database updated correctly
-
-== Notes
-
-IMPORTANT:
-- Ensure VRF names match exactly in backend and network device.
-- Any mismatch may lead to routing failures.
-- Session parameters must align with AAA policies.
