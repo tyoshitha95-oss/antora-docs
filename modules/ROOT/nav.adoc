@@ -72,10 +72,10 @@
 **** xref:Dialog/ENT/core3.adoc[Diagramatic Representation]
 *** xref:Dialog/ENT/file.adoc[File & Variable Reference]
 *** Test Cases
-**** xref:Dialog/ENT/testcases/ent1.adoc[ENT1 - MSISDN Authentication]
-**** xref:Dialog/ENT/testcases/ent2.adoc[ENT2 - Username Authentication]
-**** xref:Dialog/ENT/testcases/ent3.adoc[ENT3 - Framed address is given by the AAA]
-**** xref:Dialog/ENT/testcases/ent4.adoc[ENT4 - Framed IP is sent by the SMF]
+**** xref:Dialog/ENT/testcases/ent1.adoc[ENT1]
+***** xref:Dialog/ENT/testcases/ent3.adoc[Framed address is given by the AAA]
+***** xref:Dialog/ENT/testcases/ent4.adoc[Framed IP is sent by the SMF]
+**** xref:Dialog/ENT/testcases/ent2.adoc[ENT2]
 
 
 
