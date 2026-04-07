@@ -1,37 +1,19 @@
-= Overview
+= Enterprise (ENT) Authentication Overview
 
-The Enterprise (ENT) Authentication System is a RADIUS-based network access control and subscriber management solution designed to provision, authenticate, and manage enterprise users within the AAA environment.
-
-The system supports enterprise-grade connectivity by integrating with upstream systems such as CRM platforms and downstream network elements including Huawei PGW and Cisco LNS/ASR devices. It enables centralized control over authentication, routing, and accounting for enterprise subscribers.
-
-Enterprise users are provisioned and managed through API-based integration with CRM systems, ensuring real-time synchronization of subscriber data. The system follows an idempotent approach, where repeated provisioning requests update existing user profiles without duplication.
-
-Enterprise authentication is categorized into two primary models:
-
-1. Framed Route Based Solution  
-2. Router Based Solution  
-
-In the framed route-based solution, authentication is performed using a combination of MSISDN and APN, followed by username and password verification. This dual-layer authentication ensures higher accuracy and control in identifying enterprise subscribers.
-
-In the router-based solution, authentication is performed using username and password configured on enterprise routers. The system processes the user-name attribute, removes any domain information if present, and validates credentials against the AAA database.
-
-During successful authentication, the system responds with routing and policy attributes such as VRF name, Loopback name, Framed-IP, Framed routes, QoS templates, and sub-template rules. These attributes are delivered using vendor-specific AVPs based on the network device.
-
-The system also supports accounting functionality, where session start and stop events generate CDR/EDR records. These records are stored in a standard format and shared with downstream BI systems for reporting and analysis.
-
-Enterprise subscriber lifecycle management includes provisioning, updating (VRF, password, barring status), and viewing user profiles via API operations. User deletion is handled separately through the AAA EMS GUI, supporting single, multiple, and bulk deletion operations.
-
-Additionally, the system enforces policy-driven controls such as barring/unbarring users, routing configuration, and QoS enforcement, ensuring secure and efficient network access for enterprise customers.
+== Introduction
+The Enterprise (ENT) module operates harmoniously alongside the LTE configurations. It manages complex AAA routing for enterprise lease line and corporate mobile broadband users. The configuration uses FreeRADIUS to differentiate between standard MSISDN-based logins and explicit corporate Username logins, executing distinct logic flows based on the profile format.
 
 == Key Objectives
+* Serve as the unified entry point for both LTE and ENT traffic, branching immediately based on APN strings (`Called-Station-Id`).
+* Differentiate between `ENT1` (device-based, MSISDN) and `ENT2` (identity-based, Username) authentication.
+* Manage complex IP allocations, handling conflicts between statically assigned DB IPs and dynamically requested Framed-Addresses from downstream routers (SMF/BNG).
+* Perform strict PAP validation against the SQL core.
 
-* Enable secure and centralized enterprise authentication
-* Support multiple authentication mechanisms (Framed Route and Router-Based)
-* Automate subscriber provisioning and updates via CRM integration
-* Enforce routing, QoS, and policy-based controls
-* Provide accurate accounting and session tracking through CDR/EDR generation
-* Ensure scalability and real-time processing for enterprise environments
-
-== Scope of the Documentation
-
-This documentation provides a comprehensive overview of the enterprise authentication system, including system architecture, authentication workflows, provisioning mechanisms, routing configurations, accounting processes, performance considerations, security features, and troubleshooting guidelines.
+== Workflow Summary
+1. The radius server catches incoming requests on the shared `ent_lte` virtual server.
+2. The server analyzes the `Called-Station-Id`. If it lacks standard LTE APN names, it assumes Enterprise traffic and delegates to `ent_auth_policy`.
+3. The policy checks if the `User-Name` contains an `@` sign snippet.
+4. If it has an `@`, it is tagged as `ENT2` group. Else, it is tagged as `ENT1` and the script forcefully concatenates `Calling-Station-Id` and `Called-Station-Id` to build an internal DB key.
+5. The `ent_sql` mechanism queries the DB.
+6. The framework executes `pap` matching.
+7. Address conflict resolution resolves any mismatch between `Framed-Address` coming from DB vs. Router.

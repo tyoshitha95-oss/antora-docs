@@ -1,4 +1,4 @@
-= Core Function Analysis - Enterprise (ENT)
+= Core Function Analysis - Diagramatic Representations
 :toc: left
 :toclevels: 3
 :sectnums:

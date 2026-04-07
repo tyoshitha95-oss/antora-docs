@@ -1,0 +1,20 @@
+= Test Case: ENT1 - MSISDN Authentication
+
+== Description
+Test the Enterprise mapping where the corporate system relies specifically on the hardware MSISDN coupled with the APN, forcing the RADIUS server to build a compound authentication key to interact with the backend Database.
+
+== Configuration Setup (Simulated via cURL/API)
+
+* **Account Type**: `ENT1`
+* **Trigger Mechanism**: Username lacks the `@` domain identifier.
+* **Hardware ID (`Calling-Station-Id`)**: `940812404795`
+* **Assigned APN (`Called-Station-Id`)**: `ltel2fr2`
+* **Database Identity Mapping**: The server will query the database for `940812404795-ltel2fr2`.
+
+== Expected Execution Logic
+1. Request arrives. Username lacks `@`.
+2. Router verifies `Called-Station-Id` is NOT a default LTE APN (fallback to ENT block).
+3. The Radius engine overwrites the Username to `940812404795-ltel2fr2`.
+4. Group is set to `ENT1`.
+5. Database replies with Profile constraints.
+6. Address resolution takes place: If the client requests `198.23.89.10`, the AAA allows it via Address Arbitration rules.

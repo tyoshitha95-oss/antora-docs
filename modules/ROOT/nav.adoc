@@ -66,23 +66,17 @@
 
 
 
-** xref:Dialog/ENT/index3.adoc[ENT]
-
-*** xref:Dialog/ENT/overview3.adoc[Overview]
-
+** xref:Dialog/ENT/overview3.adoc[ENT]
 *** xref:Dialog/ENT/architecture3.adoc[System Architecture]
+*** xref:Dialog/ENT/core.adoc[Core Function Analysis]
+**** xref:Dialog/ENT/core3.adoc[Diagramatic Representation]
+*** xref:Dialog/ENT/file.adoc[File & Variable Reference]
+*** Test Cases
+**** xref:Dialog/ENT/testcases/ent1.adoc[ENT1 - MSISDN Authentication]
+**** xref:Dialog/ENT/testcases/ent2.adoc[ENT2 - Username Authentication]
+**** xref:Dialog/ENT/testcases/ent3.adoc[ENT3 - Framed address is given by the AAA]
+**** xref:Dialog/ENT/testcases/ent4.adoc[ENT4 - Framed IP is sent by the SMF]
 
-*** xref:Dialog/ENT/core3.adoc[Core Function Analysis]
-
-*** xref:Dialog/ENT/config3.adoc[Key Configuration Parameters]
-
-*** xref:Dialog/ENT/error3.adoc[Error Handling]
-
-*** xref:Dialog/ENT/performance3.adoc[Performance Consideration]
-
-*** xref:Dialog/ENT/security3.adoc[Security Features]
-
-*** xref:Dialog/ENT/monitoring3.adoc[Monitoring and Troubleshooting]
 
 
 
