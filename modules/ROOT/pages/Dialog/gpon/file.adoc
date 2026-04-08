@@ -1,0 +1,72 @@
+= File and Variable Reference
+:toc: left
+:toclevels: 3
+:icons: font
+:sectnums:
+
+== Core Files
+
+* *`sites-available/gpon`*  
+**Purpose**: The main virtual server definition for GPON requests. Hooks the request up to the authentication, authorization, accounting, and post-auth modules.
+
+* *`policy.d/gpon_auth_policy`*  
+**Purpose**: The main authentication policy module for GPON. Responsible for parsing and validating the username string and retrieving the plaintext password from the database.
+
+* *`policy.d/barred_user_policy`*  
+**Purpose**: Blocks users whose `Barring-Status` is marked as restricted by the backend systems.
+
+* *`policy.d/max_session_policy`*  
+**Purpose**: Prevents simultaneous login sessions based on the user's explicit profile rules.
+
+== Variable Reference Matrix
+
+To logically trace the authorization stream, here are the key variables assigned and read during the GPON process:
+
+=== `User-Name`
+
+* *Purpose*: Identifies the incoming client from the network hardware.
+
+* *Dependency Tree*:
+. Sent by the client equipment (`request:User-Name`).
+. Evaluated and sanitized by `gpon_auth_policy` (rejects spaces, multiple dots, and empty strings).
+. Modifies the internal variable `Tmp-String-0` = `User-Name`.
+. Extracted into `Tmp-String-1` by taking all characters before the `@`.
+. The last 9 digits of `Tmp-String-1` are appended to the prefix `94`.
+. Final canonical `User-Name` is rewritten into the request for Database lookup.
+. In `post-auth`, `reply:User-Name` and `session-state:User-Name` are stripped to prevent leakage to the edge.
+
+=== `CHAP-Password`
+
+* *Purpose*: The cryptographic challenge response submitted by the client.
+
+* *Dependency Tree*:
+. Ingested from the client request.
+. Checked for presence in `gpon_auth_policy`.
+. Evaluated in the `authenticate` block using `Auth-Type CHAP`.
+
+=== `control:Cleartext-Password`
+
+* *Purpose*: The plaintext password stored in the central AAA database.
+
+* *Dependency Tree*:
+. Fetched from the SQL/Redis backend via `gpon_sql` module inside `gpon_auth_policy`.
+. If missing or `null`, the request is rejected with `User not found.`.
+. Otherwise, passed to the CHAP module to reconstruct the challenge and verify the `CHAP-Password`.
+
+=== `control:Barring-Status`
+
+* *Purpose*: Flags if an account is suspended or blocked.
+
+* *Dependency Tree*:
+. Retrieved from the database user profile associated with the user.
+. Evaluated in `barred_user_policy` during `post-auth`.
+. If value `!= 0`, issues reject explicitly.
+
+=== `control:Simultaneous-Session-Status`
+
+* *Purpose*: Determines if the account has exceeded active simultaneous sessions.
+
+* *Dependency Tree*:
+. Inherited from the session registry tables via SQL lookup.
+. Evaluated in `max_session_policy`.
+. If value `!= 1`, rejects with limit hit flag.

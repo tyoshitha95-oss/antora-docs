@@ -1,0 +1,361 @@
+= Scenarios 1–5 
+
+---
+
+== Scenario 1: First login (MAC not found) → Accept + init A/N package
+
+*Trigger*::
+MAC address not present in `MACL2USERS`
+
+*Process*::
+- Perform DB lookup → no record found
+- Assign default package mapping (A/N)
+- Initialize quota counters
+
+*Outcome*::
+Access-Accept (New session initialized)
+
+=== Request
+
+[source,pseudocode]
+----
+echo 'User-Name="5a8c.7816.5f24",
+User-Password="mytest",
+NAS-Port=2138432,
+NAS-IP-Address=10.174.157.1,
+Service-Type=Framed-User,
+Framed-Protocol=PPP,
+Calling-Station-Id="5a:8c:78:16:5f:24",
+NAS-Identifier="MALA-B-HW-BNG-01",
+NAS-Port-Type=Ethernet,
+NAS-Port-Id="\001QWLAN:wlan1:320:DE_IWAG_MAC:R310:997334611_DETAC_Ruckus_MAIN_AP:34:FA:9F:08:72:40:",
+Acct-Session-Id="MALA-B-00210300100320ef3f87AAAYfe",
+Connect-Info="1000000000",
+Huawei-Startup-Stamp=1722845152,
+Huawei-IPHost-Addr="255.255.255.255 5a:8c:78:16:5f:24",
+Huawei-Connect-ID=94208,
+Huawei-Version="Huawei NetEngine 8000",
+Huawei-Product-ID="NetEngine 8000",
+Huawei-Domain-Name="mac_auth_test",
+Huawei-User-Mac="5a:8c:78:16:5f:24",
+Access-Loop-Encapsulation=0x000000,
+Module-Failure-Message="Routing to MAC_AUTH: 5a8c.7816.5f24",
+Realm="mac_auth_realm"' \
+| radclient -x localhost:21812 auth mysecret
+----
+
+=== Expected Response
+
+[source,pseudocode]
+----
+RECEIVE Access-Accept Response:
+    Id = 123
+    Source = 127.0.0.1:21812
+    Destination = 127.0.0.1:51773
+    Length = 123
+
+    Attributes:
+        Message-Authenticator = 0x935aed744061fd90117af9a2a38c5fef
+        Session-Timeout = 3600
+        Idle-Timeout = 1800
+        Class = 0x4c4f4349443a393937333334363131
+        Huawei-Account-Info = "APostpaid_12M_UD_VOL"
+        Huawei-Account-Info = "NPostpaid_12M_UD_VOL"
+----
+
+=== Database State
+
+[source,sql]
+----
+SELECT * FROM MACL2USERS;
+----
+
+|===
+| USERNAME | TimeQuota | VolumeQuota | STATUS | PKGID
+
+| 5a8c.7816.5f24
+| 10800
+| 314572800
+| 1
+| Postpaid_12M_UD_VOL
+|===
+
+---
+
+== Scenario 2: Initial login within reset window (existing record) → Accept
+
+*Trigger*::
+MAC exists and current time within reset interval
+
+*Process*::
+- Fetch existing quotas
+- Validate time window
+- No reset applied
+
+*Outcome*::
+Access-Accept (Continue with existing quotas)
+
+=== Request
+
+[source,pseudocode]
+----
+echo 'User-Name="5a8c.7816.5f24",
+NAS-Port=2138432,
+NAS-IP-Address=10.174.157.1,
+Service-Type=Framed-User,
+Framed-Protocol=PPP,
+Framed-IP-Address=10.254.154.59,
+NAS-Identifier="MALA-B-HW-BNG-01",
+NAS-Port-Type=Ethernet,
+NAS-Port-Id="\001RWLAN:wlan33:320:DE_IWAG_MAC:R310:997334611_DETAC_Ruckus_MAIN_AP:34:FA:9F:08:72:40:",
+Acct-Session-Id="MALA-B-00210SSG000100ff5ca3AAAIQJ",
+Huawei-Service-Info="NPostpaid_12M_UD_VOL",
+Module-Failure-Message="Routing to MAC_AUTH: 5a8c.7816.5f24",
+Realm="mac_auth_realm"' \
+| radclient -x localhost:21812 auth mysecret
+----
+
+=== Expected Response
+
+[source,pseudocode]
+----
+RECEIVE Access-Accept Response:
+    Id = 69
+    Source = 127.0.0.1:21812
+    Destination = 127.0.0.1:49675
+    Length = 62
+
+    Attributes:
+        Message-Authenticator = 0x17884e3a330952a68b81ed5a6632d602
+        Session-Timeout = 10471
+        Huawei-Remanent-Volume = 251818
+        Idle-Timeout = 1800
+----
+
+=== Database State
+
+[source,sql]
+----
+SELECT USERNAME, TimeQuota, VolumeQuota, LASTRSTTIME FROM MACL2USERS;
+----
+
+|===
+| USERNAME | TimeQuota | VolumeQuota | LASTRSTTIME
+
+| 5a8c.7816.5f24
+| 10800
+| 314572800
+| NOW()
+|===
+
+---
+
+== Scenario 3: Initial login beyond reset window → Accept (quotas reset)
+
+*Trigger*::
+MAC exists and reset interval expired
+
+*Process*::
+- Reset time and volume quotas
+- Update DB with fresh values
+
+*Outcome*::
+Access-Accept (Quotas refreshed)
+
+=== Request
+
+[source, pseudocode]
+----
+NAS → AAA:
+ACCESS_REQUEST {
+  User-Name = "MAC"
+}
+
+AAA → NAS:
+ACCESS_ACCEPT {
+  Reset Quotas
+}
+----
+
+=== Expected Response
+
+[source, pseudocode]
+----
+AAA → NAS:
+ACCESS_ACCEPT {
+  Result = "Access-Accept"
+  Message = "Quota reset and session allowed"
+}
+----
+
+=== Database State
+
+[source,sql]
+----
+SELECT USERNAME, TimeQuota, VolumeQuota, LASTLOGINTIME FROM MACL2USERS;
+----
+
+|===
+| USERNAME | TimeQuota | VolumeQuota | LASTLOGINTIME
+
+| 5a8c.7816.5f24
+| 7200
+| 204800000
+| NOW()
+|===
+
+---
+
+== Scenario 4: Location not found → Reject
+
+*Trigger*::
+No matching location in `LOCTOPACKAGE`
+
+*Process*::
+- Location validation fails
+
+*Outcome*::
+Access-Reject
+
+
+=== Request
+
+[source,pseudocode]
+----
+echo 'User-Name="5a8c.7816.5f24",
+User-Password="mytest",
+NAS-Port=2138432,
+NAS-IP-Address=10.174.157.1,
+Service-Type=Framed-User,
+Framed-Protocol=PPP,
+Calling-Station-Id="5a:8c:78:16:5f:24",
+NAS-Identifier="MALA-B-HW-BNG-01",
+NAS-Port-Type=Ethernet,
+NAS-Port-Id="\001QWLAN:wlan1:320:DE_IWAG_MAC:R310:997339611_DETAC_Ruckus_MAIN_AP:34:FA:9F:08:72:40:",
+Acct-Session-Id="MALA-B-00210300100320ef3f87AAAYfe",
+Connect-Info="1000000000",
+Huawei-Startup-Stamp=1722845152,
+Huawei-IPHost-Addr="255.255.255.255 5a:8c:78:16:5f:24",
+Huawei-Connect-ID=94208,
+Huawei-Version="Huawei NetEngine 8000",
+Huawei-Product-ID="NetEngine 8000",
+Huawei-Domain-Name="mac_auth_test",
+Huawei-User-Mac="5a:8c:78:16:5f:24",
+Access-Loop-Encapsulation=0x000000,
+Module-Failure-Message="Routing to MAC_AUTH: 5a8c.7816.5f24",
+Realm="mac_auth_realm"' \
+| radclient -x localhost:21812 auth mysecret
+----
+
+=== Expected Response
+
+[source,pseudocode]
+----
+RECEIVE Access-Reject Response:
+    Id = 163
+    Source = 127.0.0.1:21812
+    Destination = 127.0.0.1:38174
+    Length = 58
+
+    Attributes:
+        Message-Authenticator = 0xa0c284f9b8ff112659bf3bf86f8fe135
+        Reply-Message = "Location not found"
+
+    Result:
+        Expected = Access-Accept
+        Actual = Access-Reject
+        Status = FAILURE
+----
+
+=== Database State
+
+[source,sql]
+----
+SELECT USERNAME, TimeQuota, VolumeQuota FROM MACL2USERS;
+----
+
+|===
+| USERNAME | TimeQuota | VolumeQuota
+
+| 5a8c.7816.5f24
+| 3600
+| 0
+|===
+
+---
+
+== Scenario 5: Access during restricted time window → Reject
+
+*Trigger*::
+Current time outside allowed `TIMESPAN`
+
+*Process*::
+- Evaluate time policy
+- Detect violation
+
+*Outcome*::
+Access-Reject
+
+=== Request
+
+[source,pseudocode]
+----
+echo 'User-Name="5a8c.7816.5f24",
+User-Password="mytest",
+NAS-Port=2138432,
+NAS-IP-Address=10.174.157.1,
+Service-Type=Framed-User,
+Framed-Protocol=PPP,
+Calling-Station-Id="5a:8c:78:16:5f:24",
+NAS-Identifier="MALA-B-HW-BNG-01",
+NAS-Port-Type=Ethernet,
+NAS-Port-Id="\001QWLAN:wlan1:320:DE_IWAG_MAC:R310:997339611_DETAC_Ruckus_MAIN_AP:34:FA:9F:08:72:40:",
+Acct-Session-Id="MALA-B-00210300100320ef3f87AAAYfe",
+Connect-Info="1000000000",
+Huawei-Startup-Stamp=1722845152,
+Huawei-IPHost-Addr="255.255.255.255 5a:8c:78:16:5f:24",
+Huawei-Connect-ID=94208,
+Huawei-Version="Huawei NetEngine 8000",
+Huawei-Product-ID="NetEngine 8000",
+Huawei-Domain-Name="mac_auth_test",
+Huawei-User-Mac="5a:8c:78:16:5f:24",
+Access-Loop-Encapsulation=0x000000,
+Module-Failure-Message="Routing to MAC_AUTH: 5a8c.7816.5f24",
+Realm="mac_auth_realm"' \
+| radclient -x localhost:21812 auth mysecret
+----
+
+=== Expected Response
+
+[source,pseudocode]
+----
+RECEIVE Access-Reject Response:
+    Id = 186
+    Source = 127.0.0.1:21812
+    Destination = 127.0.0.1:52377
+    Length = 76
+
+    Attributes:
+        Message-Authenticator = 0x060490cd8a01f63c65900d1e49aeb3bb
+        Reply-Message = "Access outside permitted time window"
+
+    Result:
+        Expected = Access-Accept
+        Actual = Access-Reject
+        Status = FAILURE
+----
+
+=== Database State
+
+[source,sql]
+----
+SELECT USERNAME, TimeQuota, VolumeQuota FROM MACL2USERS;
+----
+
+|===
+| USERNAME | TimeQuota | VolumeQuota 
+
+| 5a8c.7816.5f24
+| 0
+| 1024000
+|===

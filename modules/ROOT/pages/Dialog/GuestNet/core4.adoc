@@ -1,45 +1,363 @@
 = Core Function Analysis
+:toc: left
+:toclevels: 4
+:sectnums:
 
-The GuestNet system processes RADIUS requests through a central handler function called handle_request.
+The GuestNet system processes all RADIUS requests through a central handler function called `handle_request`. This function acts as the main decision engine and routes requests based on their type, ensuring proper handling of authentication and accounting flows.
 
-This function routes requests based on their type:
+== 3.1 Request Routing Logic
 
-* Access-Request → AuthUser (Authentication)
-* Accounting-Start → AcctStart
-* Accounting-Alive → AcctAlive
-* Accounting-Stop → AcctStop
+The system classifies incoming RADIUS packets and directs them to the appropriate function.
 
-During authentication, the AuthUser function performs multiple validation steps.
+[mermaid]
+----
+flowchart TD
+    A[RADIUS Packet Received] --> B{Packet Type}
+    B -->|Access-Request| C[AuthUser]
+    B -->|Acct-Start| D[AcctStart]
+    B -->|Acct-Alive| E[AcctAlive]
+    B -->|Acct-Stop| F[AcctStop]
+    B -->|Other| G[Accept Default]
+----
 
-First, it loads cached data using loadCache to avoid repeated database queries.
+* Access-Request → `AuthUser` (Authentication)
+* Accounting-Start → `AcctStart`
+* Accounting-Alive → `AcctAlive`
+* Accounting-Stop → `AcctStop`
 
-Then, it extracts user credentials, IP address, and resolves the user location using getLocation2.
+---
 
-The system queries the ACCOUNT table to validate the user’s PIN and password.
+== 3.2 Authentication Flow (AuthUser)
 
-If the password matches or a master password is used, the process continues.
+The `AuthUser` function is responsible for validating user access and assigning session parameters.
 
-Next, the system checks whether the user’s assigned package is allowed at the detected location.
+=== 3.2.1 Authentication Workflow
 
-Concurrency is validated by checking active sessions in the RADONLINE table.
+[mermaid]
+----
+flowchart TD
+    A[Access-Request] --> B[Load Cache]
+    B --> C[Extract Credentials]
+    C --> D[Resolve Location]
+    D --> E[Query ACCOUNT]
+    E --> F{User Exists?}
+    F -->|No| F1[Reject]
+    F -->|Yes| G{Password Valid?}
+    G -->|No| G1[Reject]
+    G -->|Yes| H{Package Allowed?}
+    H -->|No| H1[Reject]
+    H -->|Yes| I{Concurrency OK?}
+    I -->|No| I1[Reject]
+    I -->|Yes| J{Status Active?}
+    J -->|No| J1[Reject]
+    J -->|Yes| K{Expired?}
+    K -->|Yes| K1[Reject]
+    K -->|No| L{Quota Available?}
+    L -->|No| L1[Reject]
+    L -->|Yes| M[Calculate Session]
+    M --> N[Build Response]
+    N --> O[Access-Accept]
+----
 
-The system ensures that the user has not exceeded the maximum allowed sessions.
+---
 
-It also verifies account status, first login conditions, and expiration rules.
+=== 3.2.2 Cache Loading
 
-Session timeout is calculated based on package type, validity period, and time quota.
+To improve performance, the system loads frequently used data into memory.
 
-If all validations pass, the system sends an Access-Accept response with attributes such as:
+[source,sql]
+----
+SELECT ID, CI FROM LOCATION WHERE STATUS=0;
+SELECT ID, TIME_QUOTA, VALID_FOR FROM PACKAGES WHERE STATUS=0;
+----
+
+Purpose:
+- Reduce database load
+- Enable fast validation of location and package mappings
+
+---
+
+=== 3.2.3 User Validation
+
+[source,sql]
+----
+SELECT 
+    unix_timestamp(CREATE_DATE) AS CD,
+    IFNULL(unix_timestamp(FIRST_LOGIN),0) AS FL,
+    unix_timestamp(NOW()) AS CT,
+    PASSWORD,
+    PKG_ID,
+    LOC_ID,
+    USED_TIME_QUOTA,
+    STATUS
+FROM ACCOUNT
+WHERE PIN = '<username>'
+LIMIT 1;
+----
+
+Purpose:
+- Validate user existence
+- Retrieve quota, package, and status
+
+---
+
+=== 3.2.4 Password Validation
+
+Two modes are supported:
+
+- Normal password validation
+- Master password (`dialog`) bypass
+
+Decision:
+- If password mismatch → Reject
+- Else → Continue
+
+---
+
+=== 3.2.5 Location Resolution
+
+The system determines the user location using two methods:
+
+==== L2 Detection (Circuit-ID)
+[source,sql]
+----
+SELECT CI
+FROM WIFI.WIFI_IP
+WHERE circuit_id = '<circuit_id>'
+AND remote_id = '<remote_id>'
+LIMIT 1;
+----
+
+==== L3 Detection (IP-Based)
+[source,sql]
+----
+SELECT CI
+FROM WIFI.WIFI_IP
+WHERE start_ip <= inet_aton('<ip>')
+AND inet_aton('<ip>') <= end_ip
+LIMIT 1;
+----
+
+---
+
+=== 3.2.6 Package Validation
+
+[source,sql]
+----
+SELECT 1
+FROM PKG_TO_LOC
+WHERE PKG_ID = '<pkg_id>'
+AND LOC_ID = '<loc_id>';
+----
+
+Purpose:
+- Ensure user package is allowed at the current location
+
+---
+
+=== 3.2.7 Concurrency Control
+
+[source,sql]
+----
+SELECT COUNT(*) AS CNT
+FROM WIFI.RADONLINE
+WHERE USERNAME LIKE '<username>%';
+----
+
+Purpose:
+- Enforce maximum allowed simultaneous sessions
+
+---
+
+=== 3.2.8 Session Timeout Calculation
+
+Session timeout depends on package type:
+
+[cols="1,2,2"]
+|===
+|PKGTYPE |Expiry Base |Session Logic
+
+|1 |First Login |Until expiry
+|2 |Create Date |Until expiry
+|3 |First Login |Quota-based
+|4 |Create Date |Quota-based
+|===
+
+Rules:
+- Reject if expired
+- Reject if quota exhausted
+- Maximum session capped at 7 days
+
+---
+
+=== 3.2.9 RADIUS Response Attributes
+
+If authentication succeeds:
 
 * Session-Timeout
 * Idle-Timeout
 * Class attribute
-* Service-Info and Account-Info
+* Service-Info
+* Account-Info
+* Vendor-specific attributes
 
-Accounting functions update session usage:
+---
 
-* AcctStart → creates session record
-* AcctAlive → updates usage incrementally
-* AcctStop → finalizes session and writes CDR
+== 3.3 Accounting Flow
 
-This flow ensures accurate authentication, session control, and usage tracking.
+Accounting tracks session lifecycle and usage.
+
+---
+
+=== 3.3.1 Accounting Start (AcctStart)
+
+[mermaid]
+----
+flowchart TD
+    A[Acct-Start] --> B[Extract Attributes]
+    B --> C[Parse Class]
+    C --> D[Delete Old Session]
+    D --> E[Insert RADONLINE]
+    E --> F[Set First Login]
+    F --> G[Accept]
+----
+
+==== SQL Operations
+
+[source,sql]
+----
+DELETE FROM WIFI.RADONLINE WHERE FRAMEDIPADDRESS = '<ip>';
+----
+
+[source,sql]
+----
+INSERT INTO WIFI.RADONLINE (...)
+VALUES (...);
+----
+
+[source,sql]
+----
+UPDATE ACCOUNT
+SET FIRST_LOGIN = NOW()
+WHERE FIRST_LOGIN IS NULL
+AND PIN = '<username>';
+----
+
+---
+
+=== 3.3.2 Accounting Interim (AcctAlive)
+
+[mermaid]
+----
+flowchart TD
+    A[Acct-Alive] --> B[Fetch Previous Session]
+    B --> C[Calculate Delta]
+    C --> D[Update Quota]
+    D --> E[Update RADONLINE]
+    E --> F[Accept]
+----
+
+==== SQL Operations
+
+[source,sql]
+----
+SELECT sessionTime, download, upload
+FROM WIFI.RADONLINE
+WHERE ACCTSESSIONID = '<session_id>';
+----
+
+[source,sql]
+----
+UPDATE ACCOUNT
+SET USED_TIME_QUOTA = USED_TIME_QUOTA + <delta_time>
+WHERE PIN = '<username>';
+----
+
+---
+
+=== 3.3.3 Accounting Stop (AcctStop)
+
+[mermaid]
+----
+flowchart TD
+    A[Acct-Stop] --> B[Fetch Session]
+    B --> C[Calculate Final Delta]
+    C --> D[Update Quota]
+    D --> E[Delete RADONLINE]
+    E --> F[Insert CDR]
+    F --> G[Insert CDRS]
+    G --> H[Accept]
+----
+
+==== SQL Operations
+
+[source,sql]
+----
+DELETE FROM WIFI.RADONLINE
+WHERE ACCTSESSIONID = '<session_id>';
+----
+
+[source,sql]
+----
+INSERT INTO CDR (...)
+VALUES (...);
+----
+
+[source,sql]
+----
+INSERT INTO WIFI.CDRS (...)
+VALUES (...);
+----
+
+---
+
+== 3.4 Class Attribute Lifecycle
+
+The `Class` attribute carries session metadata across all stages.
+
+Format:
+----
+LOCID:<loc>|CUID:<user>|PKG:<pkg>|CI:walkin|GCUID:<id>
+----
+
+Usage:
+- Authentication → Created
+- Accounting Start → Parsed
+- Interim Updates → Maintained
+- Stop → Stored in CDR
+
+---
+
+== 3.5 Database Interaction Summary
+
+[cols="1,2,2"]
+|===
+|Function |Tables |Operations
+
+|AuthUser |ACCOUNT, RADONLINE |SELECT
+|AcctStart |RADONLINE, ACCOUNT |INSERT, UPDATE
+|AcctAlive |RADONLINE, ACCOUNT |SELECT, UPDATE
+|AcctStop |RADONLINE, CDR |DELETE, INSERT
+|===
+
+---
+
+== 3.6 Key Design Principles
+
+- Cache-driven validation for performance
+- Delta-based accounting for accuracy
+- Stateless session tracking via Class attribute
+- Strong separation of authentication and accounting
+- Optimized database interaction
+
+---
+
+== 3.7 Summary
+
+The Core Function Analysis demonstrates that GUESTNET:
+
+- Provides robust RADIUS-based authentication
+- Ensures strict policy enforcement
+- Tracks sessions accurately using accounting flows
+- Maintains high performance via caching
+- Supports scalable and reliable guest WiFi access

@@ -1,0 +1,67 @@
+= Session Management
+:toc: left
+:toclevels: 2
+:sectnums:
+
+== Overview
+
+Mac-Auth relies on localized session caching via `L2RADONLINE` instead of traditional NAS management.
+
+* Sessions are mapped using `Control-SessionId`
+* Prevents duplication
+* Maintains clean and structured session tracking
+
+---
+
+== Concurrency Management
+
+[tabs]
+====
+Session IDs::
++
+* Unique identifier combining NAS ID and session
+* Prevents clashes across multiple routers
+* Ensures consistent session isolation
+
+Database Updates::
++
+* Uses atomic updates in `post-auth`
++
+[source,sql]
+----
+IF(TimeQuota - Delta > 0, TimeQuota - Delta, 0)
+----
++
+* Prevents concurrent session conflicts
+* Maintains accurate quota handling
+====
+
+---
+
+== Stale Session Handling
+
+[stepper]
+....
+* Router reboot occurs without `Stop`
+* Interim updates continue increasing cache
+* Next connection validates active session constraints
+* System safely reconciles session state
+....
+
+---
+
+== Quick Summary
+
+[cols="1,2", options="header"]
+|===
+| Component | Behavior
+
+| Session Tracking
+| Uses `Control-SessionId` to avoid duplication
+
+| Concurrency Control
+| Atomic updates prevent conflicts
+
+| Stale Handling
+| Reconciles sessions after unexpected disconnects
+|===

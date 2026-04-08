@@ -1,0 +1,95 @@
+= Initial Login (`mac_auth_handle_initial_login`)
+
+== Overview
+The core responsibility of the initial login handler is to determine if a user exists, and if so, whether they are permitted to log in based on their *Reset Interval* schedule and remaining quotas.
+
+== Logical Flow
+
+A separate policy has been created to handle this requirement.
+
+1. **Check User Existence**:
+  * Action: Queries `MACL2USERS` using the MAC Address and Location ID.
+  * *Result 0 (New User)*: Sets authorization type to explicitly generate a brand-new package based on the respective location package parameters.
+  * *Result > 0 (Existing User)*: Proceeds to evaluate time-lapses.
+
++
+[source,pseudocode]
+----
+UserExists = DB.Count(MAC, LocId)
+
+if UserExists == 0:
+    AuthType = "initial_new"
+    Load default Quotas
+----
+
+2. **Elapsed Time Calculation**:
+  * Action: Retrieves the formula `NOW() - LASTRSTTIME` to determine seconds since the user's data package was last renewed.
+
++
+[source,pseudocode]
+----
+Elapsed = NOW - LASTRSTTIME
+----
+
+3. **Interval Analysis (`QTARSTINTERVAL`)**:
+  * *Condition 1: Elapsed Time >= Reset Interval*
+    * Behavior: The user's package cycle is completely exhausted. The system provisions them back to 100% full quotas, logging this internally as `initial_reset`.
+  * *Condition 2: Elapsed Time < Reset Interval*
+    * Behavior: The user is still within their billing block.
+    * *Sub-Condition A (Time exhausted)*: If `TimeQuota == 0`, flags `initial_reject`.
+    * *Sub-Condition B (Volume exhausted but Time available)*: If `VolumeQuota == 0` but `TimeQuota > 0`, flags `initial_fup`.
+    * *Sub-Condition C (Everything available)*: Flags `initial_update`.
+
++
+[source,pseudocode]
+----
+if Elapsed >= ResetInterval:
+    AuthType = "initial_reset"
+    Load default Quotas
+
+else:
+    RemainingTime = DB.GetTimeQuota()
+    RemainingVol  = DB.GetVolumeQuota()
+
+    if RemainingTime == 0:
+        AuthType = "initial_reject"
+
+    else if RemainingVol == 0:
+        AuthType = "initial_fup"
+        FUP = "_H"
+
+    else:
+        AuthType = "initial_update"
+----
+
+4. **Timespan Cap Enforcement**:
+  * If `TimeQuota` exceeds allowed `TimespanTimeout`, it is capped.
+
++
+[source,pseudocode]
+----
+if TimeQuota > TimespanTimeout:
+    TimeQuota = TimespanTimeout
+----
+
+5. **Reply Generation**:
+  * Builds response based on `AuthType`.
+  * Service-based requests return calculated values.
+  * MAC authentication uses default session values.
+
++
+[source,pseudocode]
+----
+if AuthType == "initial_reject":
+    Pass
+
+else if AuthType == "initial_reset":
+    Session-Timeout = TimeQuota
+    Huawei-Remanent-Volume = VolumeQuota
+
+else if AuthType == "initial_fup":
+    Apply throttled profile
+
+else:
+    Normal response
+----

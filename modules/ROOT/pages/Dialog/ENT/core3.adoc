@@ -1,63 +1,308 @@
-= Core Function Analysis
+= Core Function Analysis - Enterprise (ENT)
+:toc: left
+:toclevels: 3
+:sectnums:
 
-The core functionality of AAA Enterprise system revolves around authentication and accounting mechanisms.
+== Overview
 
-=== Router-Based Solution
+The Enterprise (ENT) AAA system focuses on core authentication, IP assignment, and subscriber provisioning using RADIUS. This section describes the essential functional components: Router-Based Authentication, Framed Address Handling, RADIUS Processing, and Provisioning Flow.
 
-In router-based authentication, enterprise users are authenticated using username and password configured on routers.
+== RADIUS Process
 
-The authentication request contains a username with domain format (e.g., user@domain).
+The system uses RADIUS protocol for authentication and accounting between the router (NAS) and AAA server.
 
-AAA removes the domain part and validates the username and password against the database.
+=== Authentication Flow
 
-If credentials match and the user is not barred, AAA sends an Access-Accept response.
+[mermaid]
+----
+sequenceDiagram
+    participant Router
+    participant AAA
+    participant DB
 
-Otherwise, it sends Access-Reject.
+    Router->>AAA: Access-Request
+    AAA->>DB: Validate User
+    DB-->>AAA: Result
+    AAA->>Router: Access-Accept / Reject
+----
 
-Routing attributes such as VRF, Loopback, and Framed-IP are included in the response.
+=== Accounting Flow
 
-Accounting is performed using Tunnel-Link Start and Stop messages, generating CDR records.
+[mermaid]
+----
+sequenceDiagram
+    participant Router
+    participant AAA
 
-=== Framed Address Scenarios
+    Router->>AAA: Accounting-Start
+    Router->>AAA: Accounting-Interim
+    Router->>AAA: Accounting-Stop
+----
 
-Different framed address behaviors are observed:
+=== Key Attributes
 
-1. Framed address from PGW/SMF (Authentication Only)  
-   - Used only during authentication  
-   - Requires Dialog to send required packets  
+* User-Name
+* User-Password
+* NAS-IP-Address
+* Framed-IP-Address
+* Session-Timeout
 
-2. Framed address from AAA (LNS)  
-   - AAA assigns framed IP  
-   - Pending due to missing data  
+== Router-Based Authentication
 
-3. Framed address from AAA (PGW/SMF)  
-   - Fully implemented  
-   - Works for both authentication and accounting  
+=== Flow Diagram
 
-4. Framed address sent by PGW/SMF  
-   - Fully operational  
-   - Verified for both authentication and accounting  
+[mermaid]
+----
+flowchart LR
+    Router -->|Access-Request| AAA
+    AAA --> DB
+    AAA -->|Accept/Reject| Router
+----
 
-=== Parameter Behavior Logic
+=== Decision Logic
 
-[cols="1,1,2", options="header"]
+[mermaid]
+----
+flowchart TD
+    A[Request] --> B{User Exists?}
+    B -- No --> X[Reject]
+    B -- Yes --> C{Password Valid?}
+    C -- No --> X
+    C -- Yes --> D{Account Active?}
+    D -- No --> X
+    D -- Yes --> E[Accept]
+----
+
+[cols="1,2", options="header"]
 |===
-| DB | Request | Result
+| Attribute | Description
 
-| Yes | No  | DB value is returned
-| No  | Yes | Request value is returned
-| Yes | Yes | Request value takes priority
-| No  | No  | Error is returned
+| Framed-IP-Address
+| Assigns user IP
+
+| VRF-Name
+| Routing context
+
+| Session-Timeout
+| Session duration
 |===
 
-This defines how framed address is selected in responses.
+=== Failure Scenarios
 
-=== Accounting Behavior
+* Invalid credentials → Reject
+* User not found → Reject
+* Account inactive → Reject
+* AAA timeout → Retry/Fail
 
-Accounting records are generated for successful sessions.
+== Framed Address Handling
 
-CDR files are created in a standard format and shared with BI systems.
+=== Flow Diagram
 
-Separate files can be generated based on user type using groupname.
+[mermaid]
+----
+flowchart TD
+    A[Check IP] --> B{Request IP?}
+    B -- Yes --> R[Use Request]
+    B -- No --> C{DB IP?}
+    C -- Yes --> D[Use DB]
+    C -- No --> E{External IP?}
+    E -- Yes --> F[Use External]
+    E -- No --> G[Reject]
+----
 
-Overall, the system ensures flexible authentication and consistent routing behavior.
+=== Decision Logic
+
+* Request IP takes priority
+* DB IP used if request absent
+* External IP used as fallback
+* Reject if none available
+
+=== Attribute-Level Details
+
+[cols="1,2", options="header"]
+|===
+| Attribute | Description
+
+| Framed-IP-Address | Assigned IP
+| Framed-Pool       | Pool reference
+| Framed-IP-Netmask | Subnet
+|===
+
+=== Failure Scenarios
+
+* No IP available → Reject
+* Pool exhausted → Reject
+* Duplicate IP → Conflict
+
+== Provisioning Flow
+
+=== User Creation
+
+[mermaid]
+----
+flowchart LR
+    Admin --> UI
+    UI --> API
+    API --> Validate[Validate Input]
+    Validate --> DB
+    DB --> Policy[Assign Policy/IP Pool]
+    Policy --> Activate[Set Status ACTIVE]
+    Activate --> Success
+----
+
+The user creation process begins when an administrator initiates the operation through the user interface (UI). The UI forwards the request to the backend API, which is responsible for handling business logic and processing.
+
+At the API level, the input data is validated to ensure all required fields are correctly provided and meet system constraints. This step helps prevent invalid or inconsistent data from being stored in the system.
+
+Once validation is successful, the processed data is stored in the database (DB). After storing the user information, the system assigns an appropriate policy or IP pool to the user based on predefined configurations.
+
+Following policy assignment, the user account is activated by updating its status to ACTIVE. Finally, the process completes successfully, indicating that the user has been created, configured, and is ready for use within the system.
+
+
+=== User Update
+
+[mermaid]
+----
+flowchart LR
+    Admin --> UI
+    UI --> API
+    API --> Fetch[Fetch Existing User]
+    Fetch --> Modify[Update Attributes]
+    Modify --> DB
+    DB --> Apply(Apply on next session)
+----
+
+The user update process begins when an administrator initiates an update through the user interface (UI). The UI sends the update request to the backend API, which handles the processing logic.
+
+At the API level, the system first retrieves the existing user details from the database to ensure that updates are applied to the correct record. Once the user data is fetched, the administrator’s requested changes are applied by modifying the relevant attributes such as user credentials, policies, or assigned resources.
+
+After updating the necessary fields, the modified data is stored back in the database. These changes are not immediately enforced on active sessions; instead, they take effect during the user’s next session or reconnection.
+
+This ensures system stability by avoiding disruption to currently active sessions while still applying updated configurations moving forward.
+
+
+=== User Deletion
+
+[mermaid]
+----
+flowchart LR
+    Admin --> UI
+    UI --> API
+    API --> DB
+    DB --> Remove[Delete User]
+    Remove --> Session[Terminate Active Session]
+----
+
+The user deletion process starts when an administrator initiates a deletion request through the user interface (UI). The UI forwards this request to the backend API, which is responsible for handling the operation.
+
+At the API level, the system interacts with the database to locate and remove the specified user record. Once the user is deleted from the database, the system ensures that any active sessions associated with that user are immediately terminated.
+
+Terminating active sessions is a critical step to enforce the deletion in real time, preventing the user from continuing to access the system with previously established connections.
+
+This process ensures that the user is completely removed from the system and no further access is permitted.
+
+
+
+=== View Subscriber
+
+[mermaid]
+----
+flowchart LR
+    Request --> API
+    API --> DB
+    DB --> Response[Return User Details]
+----
+
+The subscriber view process begins when a request is initiated to retrieve user details. This request is sent to the backend API, which acts as the central processing layer.
+
+The API communicates with the database to fetch the relevant subscriber information based on the request parameters, such as user ID or username. The database returns the stored user details, including attributes like account status, assigned policies, and other related information.
+
+Once the data is retrieved, the API formats the response and sends it back to the requester. This enables administrators or systems to view accurate and up-to-date subscriber information for monitoring, management, or troubleshooting purposes.
+
+
+=== Key Attributes
+
+* Username
+* Password
+* Framed- IP
+* Group
+* Status
+
+=== Failure Scenarios
+
+* Duplicate user → Reject
+* Invalid input → Error
+* DB failure → Operation failed
+
+== Session Lifecycle
+
+The Enterprise AAA system implicitly follows a session lifecycle through RADIUS authentication and accounting processes.
+
+=== Lifecycle Stages
+
+. Authentication → Access-Request / Access-Accept
+. Session Start → Accounting-Start
+. Active Session → Interim Update
+. Session Termination → Accounting-Stop
+
+=== Example Flow
+
+[mermaid]
+----
+sequenceDiagram
+    participant Router
+    participant AAA
+    participant DB
+
+    Router->>AAA: Access-Request
+    AAA->>DB: Validate User
+    AAA->>Router: Access-Accept
+    Router->>AAA: Accounting-Start
+    loop Active Session
+        Router->>AAA: Interim-Update
+    end
+    Router->>AAA: Accounting-Stop
+----
+
+=== Example SQL Representation
+
+Session data can be stored and tracked using a table structure like below:
+
+[source,sql]
+----
+CREATE TABLE user_sessions (
+    session_id VARCHAR(64) PRIMARY KEY,
+    username VARCHAR(64),
+    framed_ip VARCHAR(45),
+    start_time TIMESTAMP,
+    last_update TIMESTAMP,
+    stop_time TIMESTAMP,
+    input_octets BIGINT,
+    output_octets BIGINT,
+    status VARCHAR(20)
+);
+
+-- Insert on Accounting-Start
+INSERT INTO user_sessions (session_id, username, framed_ip, start_time, status)
+VALUES ('ABC123', 'user1', '10.0.0.10', NOW(), 'ACTIVE');
+
+-- Update on Interim-Update
+UPDATE user_sessions
+SET last_update = NOW(),
+    input_octets = input_octets + 5000,
+    output_octets = output_octets + 3000
+WHERE session_id = 'ABC123';
+
+-- Update on Accounting-Stop
+UPDATE user_sessions
+SET stop_time = NOW(),
+    status = 'TERMINATED'
+WHERE session_id = 'ABC123';
+----
+
+=== Purpose
+
+* Tracks active user sessions in real-time
+* Maintains usage data for billing and monitoring
+* Ensures session continuity even if stop packets are delayed
+

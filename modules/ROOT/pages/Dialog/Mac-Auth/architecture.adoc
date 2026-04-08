@@ -1,0 +1,91 @@
+= System Architecture
+:toc: left
+:toclevels: 3
+:sectnums:
+
+== Overview
+The Mac-Auth implementation redefines the traditional FreeRADIUS workflow.  
+Instead of relying on EAP or CHAP/PAP, it introduces a custom logic-gate pipeline that directly evaluates MAC addresses and database-driven state.
+
+At a high level, the architecture links:
+
+* *NAS (BNG)* – Huawei BRAS sending authentication requests
+* *FreeRADIUS Engine* – Executes Unlang policy logic
+* *Database Layer* – Stores dynamic user/session state
+
+== Standard Data Flow 
+
+=== 1. Request Phase
+* BNG sends an *Access-Request* containing MAC and session attributes
+
+=== 2. Authorization Engine (`authorize`)
+Core decision pipeline:
+
+* Validate MAC format
+* Check user location
+* Apply time restrictions (`TIMESPAN`)
+* Identify session type:
+  ** Initial Connect
+  ** Continuation (Service / FUP)
+* Evaluate quota usage
+* Final decision:
+  ** Access-Accept
+  ** Access-Reject
+
+=== 3. Post-Processing (`post-auth`)
+Real-time updates:
+
+* Deduct session time and volume
+* Update internal counters
+* Sync active session cache
+
+=== 4. Accounting Engine (`accounting`)
+Session lifecycle management:
+
+* *Stop packets* – finalize billing and clear session
+* *Interim updates* – continuous usage tracking
+
+== Core Components
+
+=== Database Layer
+All logic depends on SQL integrations (e.g., `sql_mac_auth1`, `sql_mac_auth2`).
+
+Designed for:
+
+* Atomic operations
+* Safe concurrent handling
+* Accurate quota tracking
+
+==== Key Tables
+
+* *MACL2USERS*
+  ** Maps MAC + Location → Package + Quotas
+
+* *L2RADONLINE*
+  ** Tracks active sessions using `ACCTSESSIONID`
+
+* *MACL2CDR / LOCTOPACKAGE*
+  ** Usage tracking and package mapping
+
+=== Variable Flow (Logic Tree)
+
+Instead of static variables, the system uses dynamic attribute mapping:
+
+* `Tmp-String-*` → Temporary processing values
+* `Control-*` → Internal decision flags
+
+==== Internal Data Movement
+
+* Uses `update control` blocks
+* Ensures:
+  ** No sensitive data leakage
+  ** Clean state transitions
+  ** High-performance execution
+
+== Key Design Highlights
+
+* Fully policy-driven architecture
+* Real-time quota enforcement
+* Intelligent session classification
+* Secure internal variable handling
+* Scalable for high concurrent sessions

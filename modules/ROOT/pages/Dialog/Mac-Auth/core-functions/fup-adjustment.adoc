@@ -1,0 +1,42 @@
+= Fair Usage Policy (FUP) Adjustment
+
+== Overview
+The system relies on a two-tiered threshold adjustment logic (`mac_auth_check_fup` and `mac_auth_adjust_reply`) to manage overarching fairness thresholds cleanly. Users normally face full constraints, but FUP shifts speeds downward rather than instantly kicking users offline (when business logic permits).
+
+== Logic: `mac_auth_check_fup`
+
+FUP initiates strictly under Initial Authentication, never mid-continuation packet (continuations naturally resolve FUP during subsequent initial connections).
+
+There are two primary modes to trigger FUP `_H`:
+. **Location Exhaustion (Global Cap)**:
+  * Analyzes the overall location's capacity. If `LocVolumeQuotaCDR >= LocVolumeQuota`, the entire array of packets attached to the LocId inherits the `_H` restriction flag regardless of user package allowances.
+. **User Quota Exhaustion (Individual Cap)**:
+  * If the user's specific `VolumeQuota` equals zero, but `TimeQuota > 0`, the infrastructure applies `_H`.
+
+== Logic: `mac_auth_adjust_reply`
+
+Once `_H` flag cascades linearly down through authorization blocks, it must apply limits onto the actual reply attributes forwarded to the BNG.
+
+. It looks explicitly for `Control-Fup == "_H"`.
+. Overrides explicit QoS queues or policies on the BNG side. For example, modifying a standard Huawei policy configuration name to one that rate-limits bandwidth explicitly.
+. Asserts session disconnect rules appropriately.
+
+== Pseudocode
+
+[source,pseudocode]
+----
+// Check FUP
+if AuthType is Initial:
+    if Location.VolumeCDR >= Location.VolumeQuota:
+        FupTracker = "_H"
+    else if User.VolumeQuota == 0 and User.TimeQuota > 0:
+        FupTracker = "_H"
+        
+// Proceed with retrieving updated PkgId just in case
+Control.PkgId = DB.GetPackageId()
+
+// Adjust Reply
+if FupTracker == "_H":
+    Reply.Huawei-Filter-Policy = "fup_speed_limit_profile"
+    // other Qos configurations attached here
+----

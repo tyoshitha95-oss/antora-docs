@@ -1,0 +1,33 @@
+= TC-02: Returning User with Extant Quota
+
+== Description
+Verifies behavior when an existing MAC address reconnects mid-interval.
+
+== Input Packet (Mock)
+[source,pseudocode]
+----
+Access-Request {
+    User-Name = "aabb.ccdd.eeff"
+    Calling-Station-Id = "aabb.ccdd.eeff"
+    Huawei-Service-Info = "N12345"
+}
+----
+
+== Condition States
+* `MACL2USERS`: Matches user. 
+* Limits: `TimeQuota = 1500`, `VolumeQuota = 100000`.
+* Timers: `LASTRSTTIME` was 1 hour ago (Limit `10 hours`). `Elapsed < Interval`.
+
+== Expected Outcome
+. **Internal Routing**: Flags `initial_update` (since queues don't match `_H`).
+. **Database Result**: Refreshes exclusively `LASTLOGINTIME = NOW()`.
+. **Network Action**: Returns `Access-Accept`.
+. **Network Package**:
+[source,pseudocode]
+----
+Access-Accept {
+    Session-Timeout = 1500
+    Huawei-Remanent-Volume = 97 (100000/1024)
+    Idle-Timeout = 1800
+}
+----

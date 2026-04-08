@@ -1,0 +1,27 @@
+= TC-03: Exhausted Quota Drop
+
+== Description
+Verifies behavior explicitly denying sessions where time constraints drop.
+
+== Input Packet (Mock)
+[source,pseudocode]
+----
+Access-Request {
+    User-Name = "aabb.ccdd.eeff"
+}
+----
+
+== Condition States
+* `MACL2USERS`: `TimeQuota = 0`.
+* Timers: `Elapsed < Interval`.
+
+== Expected Outcome
+. **Internal Routing**: Sets `initial_reject`.
+. **Network Action**: Returns `Access-Reject`.
+. **Network Package**:
+[source,pseudocode]
+----
+Access-Reject {
+    Reply-Message = "Time quota exhausted. Please wait for quota reset interval."
+}
+----

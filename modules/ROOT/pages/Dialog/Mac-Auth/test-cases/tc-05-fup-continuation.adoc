@@ -1,0 +1,31 @@
+= TC-05: FUP Continuation
+
+== Description
+Verifies the FUP logic jump algorithmically assigning explicit volumes safely.
+
+== Input Packet (Mock)
+[source,pseudocode]
+----
+Access-Request {
+    User-Name = "aabb.ccdd.eeff"
+    Huawei-Service-Info = "SSG_123_H"
+}
+----
+
+== Conditions
+* User interval valid. 
+* TimeQuota > 0.
+* VolumeQuota = 0.
+
+== Expected Outcome
+. **Internal Routing**: Flags `continuation_fup` explicitly internally. 
+. **Database**: Skips Volume checks cleanly.
+. **Network Package**:
+[source,pseudocode]
+----
+Access-Accept {
+    Session-Timeout = "Remaining Time To Limit"
+    Huawei-Remanent-Volume = 1048576  #(Hardcoded exactly 1GB)
+    Idle-Timeout = 1800
+}
+----

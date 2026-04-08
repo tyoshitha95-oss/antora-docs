@@ -1,0 +1,38 @@
+= Service Info / Continuation Variables (`mac_auth_handle_service_info` & `mac_auth_handle_session_continuation`)
+
+== Overview
+These policies establish bridging elements combining BNG inbound usage data with localized static data constraints seamlessly.
+
+== Extracted Variables Tree
+
+----
+[NAS-Identifier] & [Acct-Session-Id]
+  └── Control-SessionId (Internal Hash Tag)
+        ├── Control-OldQT (From L2RADONLINE)
+        └── Control-OldQV (From L2RADONLINE)
+
+[Huawei-Remanent-Volume (From BNG)]
+  └── Control-ControlQV (Initial inbound value multiplied by 1024)
+        └── Control-QVBytes (Byte wrapper instance)
+
+[Session-Timeout (From BNG)]
+  └── Control-ControlQT
+----
+
+== Session Delta Computation Tree
+----
+[Control-ControlQT] - [Control-OldQT]
+  └── Control-QTDiff (Total Time actually consumed in Delta)
+
+[Control-ControlQVBytes] - [Control-OldQV]
+  └── Control-QVDiff (Total Vol actually consumed in Delta)
+----
+
+== Variable Breakdown
+
+* `Control-ServiceInfo`: Stores the BNG string generated via `Huawei-Service-Info`. Checked natively using Regex array maps (`/^N/` or `/_H/`).
+* `Control-SessionId`: Concatenated mapping of `<NAS-Identifier>:<Acct-Session-Id>`. Explicitly prevents concurrent multi-router namespace clashes in `L2RADONLINE` caching.
+* `Control-ControlQV`: Converts `Huawei-Remanent-Volume` inbound string values originally typed internally as strictly KB into raw BYTES explicitly `(expr: X * 1024)` to match FreeRADIUS limits.
+* `Control-OldQT` / `Control-OldQV`: Replaced `COALESCE(LASTQT, 0)` calls from cache tracking arrays.
+* `Control-QTDiff` / `Control-QVDiff`: Subtracted elements evaluating strictly elapsed durations logic checking gracefully blocking negative anomaly jumps.
+* `Tmp-Integer-6` & `Tmp-Integer-7` & `Tmp-Integer-8`: Holds temporary boundary calculations evaluating constraints like `UserTimeQuota` mapped safely via integers before merging limits. Evaluates cleanly across functions dynamically ensuring strict limit enforcement.

@@ -1,0 +1,56 @@
+= Post-Auth Processing (`mac_auth_handle_post_auth_writes`)
+
+== Overview
+The logic sitting within `post-auth` is strictly executed only *after* the `authorize` block completes. Here is where the actual state changes are committed to the DB payload. Separating the execution into a `post-auth` hook ensures FreeRADIUS drops bad packets entirely without writing null traces to the DB limits.
+
+== Behavioral Grouping
+The logic branches distinctly based on the `Control-AuthType` constructed in earlier policies.
+
+=== Session Continuations
+For a standard `continuation`:
+. Uses `QTDiff` and `QVDiff` to explicitly deduct numerical usages directly into `MACL2USERS`.
+. Updates `L2RADONLINE` caching to log the new highest cumulative bytes fetched from the BNG.
+. Re-pulls `MACL2USERS` to evaluate remaining constraints definitively.
+. Enforces dynamic `Timespan` thresholds downscaling timeouts mathematically.
+. Produces the fatal disconnect limit check:
+  * If `.UserTimeQuota == 0`: Triggers an algorithmic Reject sequence, disconnecting the session. The user must wait out the interval timer.
+  * If `.UserVolumeQuota == 0`: The user's underlying package data is empty. However, FUP is currently not legal mid-session execution. Forces a sequence Reject that alerts the BNG to forcibly drop the line; the User must naturally re-authenticate natively to inherit the explicit `_H` FUP queue structure smoothly.
+  * If both exist securely: Pushes `Access-Accept` back into the gateway payload.
+
+=== New/Reset Intakes
+* `initial_new`: Pushes the user to `MACL2USERS` structure via `sql_mac_auth3` for the very first time.
+* `initial_reset`: Explicitly triggers the `UPDATE` payload bypassing standard delay triggers locking `LASTLOGINTIME`, `LASTRSTTIME` to `NOW()` and refilling their default quota block bounds securely internally.
+* `initial_update` / `initial_fup`: Only stamps their `LASTLOGINTIME`. Checks their existing states and builds reply arrays explicitly.
+
+== Pseudocode
+
+[source,pseudocode]
+----
+// Inside Post-Auth execution
+
+if AuthType == "continuation":
+    DB.DeductQuotas(QTDiff, QVDiff)
+    DB.UpdateRadarOnline(CurrentCumulativeValues)
+    
+    // Safety verification check
+    CurrentTimeQuota = DB.GetTimeQuota()
+    CurrentVolumeQuota = DB.GetVolumeQuota()
+    
+    CurrentTimeQuota = MIN(CurrentTimeQuota, RestrictionTimeout)
+    
+    if CurrentTimeQuota == 0:
+        Trigger Reject ("Wait for reset interval")
+    else if CurrentVolumeQuota == 0:
+        // Do not FUP mid-session. Disconnect them cleanly.
+        Trigger Reject ("Quota Exhuasted. Reconnect to jump into FUP queue")
+    else:
+        Reply.Session-Timeout = CurrentTimeQuota
+        Reply.Huawei-Remanent-Volume = CurrentVolumeQuota
+        
+else if AuthType == "initial_reset":
+    DB.ExecuteUpdate(LASTLOGINTIME = NOW(), Quotas = Max)
+    Reply.Session-Timeout = 3600 (or Full Quota if ServiceAuth)
+    
+else if AuthType == "initial_new":
+    DB.CreateUser(MAC, LocId, Quotas)
+----

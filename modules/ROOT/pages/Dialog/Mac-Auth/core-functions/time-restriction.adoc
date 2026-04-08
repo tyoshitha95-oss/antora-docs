@@ -1,0 +1,59 @@
+= Time Restriction (`mac_auth_check_timespan`)
+
+== Overview
+The system restricts MAC addresses from utilizing data outside legally permitted windows arrayed in the database. `mac_auth_check_timespan` reads expressions defining complex weekday and hour boundary arrays and parses them securely via explicit regex patterns since FreeRADIUS lacks an internal `explode()` array function.
+
+== Supported Formats
+The timespan engine recognizes combinations of older legacy structures and sophisticated weekday matrices.
+
+* **Null / Empty (`NULL`, `0-86400`)**: Completely bypasses all restriction checking natively recognizing it as "24/7 unlimited."
+* **Legacy Format (`36000-43200`)**: Only specifies seconds from midnight (e.g., 10:00 AM to 12:00 PM) running seven days a week. Dual formats `36000-43200|50400-64800` split the day.
+* **Weekday Range (`1-5:36000-43200`)**: From Monday (1) to Friday (5), explicitly between those hour seconds.
+* **Single Weekday (`5:36000-43200`)**: Applies explicitly to one day.
+
+== Logical Flow
+
+. Extracts the exact local server second using `TIME_TO_SEC(CURTIME())`.
+. Extracts the weekday utilizing standard SQL `DAYOFWEEK`.
+. Evaluates up to `5` pipelined blocks (separated by `|`).
+. Using nested regex matching, assigns variables to `Tmp-Integer`:
+  * `[1]` = Start Day
+  * `[2]` = End Day
+  * `[3]` = Start Second
+  * `[4]` = End Second
+. Checks if the user fits mathematically within the active frame.
+. Generates `RestrictionTimeout`: Extracts the upper bound minus current seconds (`End Second - Current Second`), assigning the remaining seconds as an overriding cap.
+
+== Pseudocode
+
+[source,pseudocode]
+----
+TimespanPattern = Control.Timespan
+CurrentSecond = DB.GetLocalSecond()
+CurrentWeekday = DB.GetLocalWeekday()
+
+if TimespanPattern is empty or "0-86400":
+    Auth Ok
+    Timeout = 86400 (24h)
+    Return
+
+Ranges = Split(TimespanPattern, "|") (Handled via regex cascading in production)
+
+RestrictionOk = False
+
+for Range in Ranges (Up to 5):
+    if RestrictionOk is True: 
+        break
+        
+    (StartDay, EndDay, StartSec, EndSec) = RegexExtract(Range)
+    
+    if CurrentWeekday >= StartDay and CurrentWeekday <= EndDay:
+        if CurrentSecond >= StartSec and CurrentSecond < EndSec:
+            RestrictionOk = True
+            Timeout = EndSec - CurrentSecond
+
+if not RestrictionOk:
+    Reject("Access outside permitted time window")
+else:
+    Control.RestrictionTimeout = Timeout
+----

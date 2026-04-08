@@ -1,126 +1,141 @@
 = Core Function Analysis
+:toc: left
+:toclevels: 3
+:icons: font
+:sectnums:
 
-This section provides detailed functional analysis of each GPON user management operation, including specialized use cases for IP assignment.
+== Main Entry Point (`sites-available/gpon`)
 
-=== Public Static IP Assignment
+The main entry point defines the chronological execution of blocks. When a packet enters the GPON server block, it transits through the following core phases:
 
-**Use Case**  
-Assign a fixed public IPv4 address and an IPv6 prefix to the subscriber. Typically used for business or enterprise customers who require static IPs for hosting services, VPNs, or specific routing.
+. *Authorize*  
+Executes full packet logging, runs the `gpon_auth_policy`, and prepares the `chap` module for payload inspection.
 
-**Operational Notes**
+. *Authenticate*  
+Processes the prepared CHAP request. If the sub-module rejects the credentials, an explicit `Password Failure` message is assigned to the reply.
 
-* Both IPv4 and IPv6 addresses are specified explicitly in the request.
-* IP addresses are not dynamically assigned; conflicts must be avoided by the client.
-* Ensures consistent reachability for the subscriber’s services.
-* Session parameters (`maxusersessions`, `sessionlimit`) still apply and are enforced by the platform.
-* Audit fields such as `create_user` and `last_update` provide traceability for all changes.
-* API returns a full user object including IP information after creation.
-* IPv6 prefix must conform to delegated addressing requirements; invalid prefixes may cause errors in downstream provisioning.
+. *Accounting*  
+Routes traffic through `gpon_auth_policy` (for parsing), `fttx_session`, and ultimately `gpon_accounting`.
 
-**Usage of Parameters**
+. *Post-Auth*  
+Executes session bounds and cleans up the reply stream by stripping internal `User-Name` variables to prevent leakage. Logs standard Reject/Challenge statuses.
 
-[cols="2,2,2,2",options="header"]
-|===
-| Parameter          | Expected Value          | Value Derivation                  | Example
-| `customfield11`    | PCRF ID                 | `94<SUBNO>`                       | `94367526732`
-| `password`         | Device password         | `PASSWORD`                        | `EonPr73637`
-| `groupname`        | User Group              | Hard-coded `"GPON"`               | `GPON`
-| `customfield10`    | User Notes              | `94<SUBNO>`                       | `94367526732`
-| `customfield12`    | Main package            | `MAIN_PKG`                        | `DNET31`
-| `maxusersessions`  | Max simultaneous sessions | —                               | `1`
-| `sessionlimit`     | Session timeout (seconds) | —                              | `172800`
-| `customnumfield1`  | Idle timeout (seconds)  | —                                 | `86400`
-| `userip`           | Framed IP Address       | Public static IPv4                | `122.255.14.6`
-| `framedIPv6prefix` | Delegated IPv6 Prefix   | IPv6 prefix                       | `2001:db8:abcd:0012::/6`
-|===
+== Authentication Handler (`policy.d/gpon_auth_policy`)
 
-**Example cURL**
+This policy serves as the critical gatekeeper for all GPON access requests.
 
-[source,bash]
+=== How It works
+
+Every time a user tries to connect, the policy runs through two stages:
+
+User tries to connect
+        │
+        ▼
+STAGE 1: Input Check  →  Is the username even valid?
+        │
+        ▼
+STAGE 2: Find in Database  →  Does this user exist?
+        │
+        ▼
+ACCEPT or REJECT
+
+=== Stage 1 - Input Checks (Is the username valid?)
+
+Before doing anything else, the policy ensures the request is properly formed. If anything is wrong, it rejects immediately.
+
+==== Check 1 — Required fields
+
+The request must include both a username and a password. If either is missing, it is rejected.
+
+REQUEST comes in
+    │
+    ├── Has "User-Name"?     → NO  →  REJECT "Missing User-Name"
+    ├── Has "CHAP-Password"? → NO  →  REJECT "Missing Password"
+    │
+    └── Both present?        →  Continue
+
+[source]
 ----
-curl --request PUT \
---url 'http://10.62.167.228:80/users/94367526732' \
---header 'Content-Type: application/x-www-form-urlencoded' \
---header 'Accept: application/json' \
---header 'Authorization: Basic <token>' \
---data 'customfield11=94367526732&password=EonPr73637&groupname=GPON&customfield10=94367526732&customfield12=DNET31&maxusersessions=1&sessionlimit=172800&customnumfield1=86400&userip=122.255.14.6&framedIPv6prefix=2001:db8:abcd:0012::/6'
-----
+IF User-Name CONTAINS ' ':
+    REJECT "Invalid User-Name"
 
-=== Private Dynamic IP Assignment
-
-**Use Case**  
-Assign a private IPv4 address from the operator’s internal pool. Typically used for residential or non-enterprise users.
-
-**Operational Notes**
-
-* IPv4 is dynamically assigned by the operator.
-* IPv6 prefix may be optionally delegated.
-* No `userip` or `framedIPv6prefix` parameters are passed.
-* Suitable for large-scale deployments with dynamic address allocation.
-* Audit and session parameters are still applied.
-* Avoid repeated requests for the same user to prevent inconsistent state.
-
-[cols="2,2,2,2",options="header"]
-|===
-| Parameter          | Expected Value          | Value Derivation                  | Example
-| `customfield11`    | PCRF ID                 | `94<SUBNO>`                       | `94367526732`
-| `password`         | Device password         | `PASSWORD`                        | `EonPr73637`
-| `groupname`        | User Group              | Hard-coded `"GPON"`               | `GPON`
-| `customfield10`    | User Notes              | `94<SUBNO>`                       | `94367526732`
-| `customfield12`    | Main package            | `MAIN_PKG`                        | `DNET31`
-| `maxusersessions`  | Max simultaneous sessions | —                               | `1`
-| `sessionlimit`     | Session timeout (seconds) | —                              | `172800`
-| `customnumfield1`  | Idle timeout (seconds)  | —                                 | `86400`
-|===
-
-**Example cURL**
-
-[source,bash]
-----
-curl --request PUT \
---url 'http://10.62.167.228:80/users/94367526732' \
---header 'Content-Type: application/x-www-form-urlencoded' \
---header 'Accept: application/json' \
---header 'Authorization: Basic <token>' \
---data 'customfield11=94367526732&password=EonPr73637&groupname=GPON&customfield10=94367526732&customfield12=DNET31&maxusersessions=1&sessionlimit=172800&customnumfield1=86400'
+IF User-Name != LOWERCASE(User-Name):
+    REJECT "User-Name must be lowercase"
 ----
 
-=== Public Dynamic IP Assignment
+==== Check 2 — Lowercase and no spaces
 
-**Use Case**  
-Assign a public IPv4 address dynamically from a named pool (e.g., `PUBLIC_DYNAMIC`). Used when public addressing is required but static assignment is unnecessary.
+Usernames must be all lowercase and must not contain spaces.
 
-**Operational Notes**
+ BAD:  "John Doe"  
+ BAD:  "John@isp.lk"  
+ GOOD: "john@isp.lk"  
 
-* IPv4 address is allocated from a pool defined by `customfield13`.
-* No static `userip` or `framedIPv6prefix` required.
-* Suitable for business or residential users needing public IPs.
-* Audit fields provide full traceability of which system initiated the request.
-* Session limits and idle timeout parameters are applied consistently.
-* The API ensures atomic update operations; repeated calls do not create duplicate users.
+==== Check 3 — Single @ symbol
 
-[cols="2,2,2,2",options="header"]
-|===
-| Parameter          | Expected Value          | Value Derivation                  | Example
-| `customfield11`    | PCRF ID                 | `94<SUBNO>`                       | `94367526732`
-| `password`         | Device password         | `PASSWORD`                        | `EonPr73637`
-| `groupname`        | User Group              | Hard-coded `"GPON"`               | `GPON`
-| `customfield10`    | User Notes              | `94<SUBNO>`                       | `94367526732`
-| `customfield12`    | Main package            | `MAIN_PKG`                        | `DNET31`
-| `maxusersessions`  | Max simultaneous sessions | —                               | `1`
-| `sessionlimit`     | Session timeout (seconds) | —                              | `172800`
-| `customnumfield1`  | Idle timeout (seconds)  | —                                 | `86400`
-| `customfield13`    | Framed Pool ID          | Pool name                         | `PUBLIC_DYNAMIC`
-|===
-
-**Example cURL**
-
-[source,bash]
+[source]
 ----
-curl --request PUT \
---url 'http://10.62.167.228:80/users/94367526732' \
---header 'Content-Type: application/x-www-form-urlencoded' \
---header 'Accept: application/json' \
---header 'Authorization: Basic <token>' \
---data 'customfield11=94367526732&password=EonPr73637&groupname=GPON&customfield10=94367526732&customfield12=DNET31&maxusersessions=1&sessionlimit=172800&customnumfield1=86400&customfield13=PUBLIC_DYNAMIC'
+IF User-Name HAS MORE THAN ONE '@':
+    REJECT "Multiple @ in User-Name"
+----
+
+==== Check 4 — No double dots
+
+[source]
+----
+IF User-Name CONTAINS '..':
+    REJECT "User-Name contains multiple dots"
+----
+
+==== Check 5 — Realm format
+
+[source]
+----
+IF '@' IS PRESENT AND realm DOES NOT MATCH pattern /@(.+)\.(.+)$/:
+    REJECT "Realm does not have at least one dot"
+
+IF User-Name ENDS WITH '.':
+    REJECT "Realm ends with a dot"
+
+IF realm STARTS WITH '.':
+    REJECT "Realm begins with a dot"
+----
+
+=== Stage 2 — Find the User in the Database
+
+Once the username passes validation, it is normalized and used for database lookup.
+
+==== Step 1 — Ensure @ symbol
+
+[source]
+----
+IF User-Name DOES NOT CONTAIN '@':
+    APPEND '@' to User-Name
+----
+
+==== Step 2 — Extract 9-digit service number
+
+[source]
+----
+IF local_part ENDS WITH 9 alphanumeric characters:
+    service_number = last 9 characters
+ELSE:
+    REJECT "Invalid username: No valid digits found"
+----
+
+==== Step 3 — Build database key
+
+[source]
+----
+User-Name = "94" + service_number
+----
+
+==== Step 4 — Database lookup
+
+[source]
+----
+IF Cleartext-Password NOT returned:
+    REJECT "User not found."
+ELSE:
+    ACCEPT
 ----

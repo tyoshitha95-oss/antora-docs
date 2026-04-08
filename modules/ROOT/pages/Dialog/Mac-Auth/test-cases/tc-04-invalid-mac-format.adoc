@@ -1,0 +1,24 @@
+= TC-04: Invalid MAC Format
+
+== Description
+Verifies formatting protection. The system heavily relies on properly structured MAC addresses securely.
+
+== Input Packet (Mock)
+[source,pseudocode]
+----
+Access-Request {
+    User-Name = "Random_Garbage"
+    Calling-Station-Id = "Random_Garbage"
+}
+----
+
+== Expected Outcome
+. **Internal Routing**: Fails the regex check `/^[0-9a-f]{4}\.[0-9a-f]{4}\.[0-9a-f]{4}$/`.
+. **Network Action**: Returns `Access-Reject` explicitly immediately during `.authorize`.
+. **Network Package**:
+[source,pseudocode]
+----
+Access-Reject {
+    Module-Failure-Message = "Invalid User-Name format"
+}
+----

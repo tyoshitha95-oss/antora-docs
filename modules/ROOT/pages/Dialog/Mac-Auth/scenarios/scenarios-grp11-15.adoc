@@ -1,0 +1,299 @@
+= Scenarios 11–15 
+---
+
+== Scenario 11: Time quota exhausted (qt=0) → Reject
+
+*Trigger*::
+`qt = 0` (no remaining session time)
+
+*Process*::
+- Evaluate session time usage
+- Detect exhaustion
+
+*Outcome*::
+Access-Reject
+
+=== Request
+
+[source,pseudocode]
+----
+echo 'User-Name="5a8c.7816.5f24",
+NAS-Port=2138432,
+NAS-IP-Address=10.174.157.1,
+Service-Type=Framed-User,
+Framed-Protocol=PPP,
+Framed-IP-Address=10.254.157.235,
+NAS-Identifier="MALA-B-HW-BNG-01",
+NAS-Port-Type=Ethernet,
+NAS-Port-Id="\001QWLAN:wlan1:320:DE_IWAG_MAC:R310:997339611_DETAC_Ruckus_MAIN_AP:34:FA:9F:08:72:40:",
+Acct-Session-Id="MALA-B-00210SSG000100446996AAAbbc",
+Huawei-Service-Info="NPostpaid_12M_UD_VOL"' \
+| radclient -x localhost:21812 auth mysecret
+----
+
+=== Expected Behavior
+
+[source,pseudocode]
+----
+RECEIVE Access-Reject Response:
+    Id = 145
+    Source = 127.0.0.1:21812
+    Destination = 127.0.0.1:59978
+    Length = 99
+
+    Attributes:
+        Message-Authenticator = 0x27c7d3cd5c055ca90e415a336bbccaa3
+        Reply-Message = "Time quota exhausted. Please wait for quota reset interval."
+
+    Result:
+        Expected = Access-Accept
+        Actual = Access-Reject
+        Status = FAILURE
+----
+    
+=== Database State
+
+[source,sql]
+----
+SELECT * FROM L2RADONLINE;
+----
+
+---
+
+== Scenario 12: Accounting-Start → Accounting-Response (OK)
+
+*Trigger*::
+`Acct-Status-Type = Start`
+
+*Process*::
+- Create session record in `L2RADONLINE`
+- Initialize tracking fields
+
+*Outcome*::
+Accounting-Response (OK)
+
+=== Request
+
+[source,pseudocode]
+----
+echo 'User-Name="5a8c.7816.5f24",
+NAS-Port=2138432,
+NAS-IP-Address=10.174.157.1,
+Framed-IP-Address=10.254.154.59,
+Filter-Id="ipoe_mac_auth",
+Class=0x4c4f4349443a393937333334363131,
+NAS-Identifier="MALA-B-HW-BNG-01",
+Acct-Status-Type=Start,
+Acct-Delay-Time=0,
+Acct-Session-Id="MALA-B-00210300100320ef3f87AAAYfe",
+Acct-Authentic=RADIUS,
+Event-Timestamp="Dec  3 2025 17:55:16 +0530",
+NAS-Port-Type=Ethernet,
+Calling-Station-Id="5a:8c:78:16:5f:24",
+NAS-Port-Id="\001QWLAN:wlan1:320:DE_IWAG_MAC:R310:997334611_DETAC_Ruckus_MAIN_AP:34:FA:9F:08:72:40:",
+Service-Type=Framed-User,
+Framed-Protocol=PPP,
+Idle-Timeout=1800,
+Session-Timeout=3600,
+Huawei-IPHost-Addr="10.254.154.59 5a:8c:78:16:5f:24",
+Huawei-Priority=15,
+Huawei-Connect-ID=94208,
+Huawei-Domain-Name="mac_auth_test",
+Huawei-Qos-Profile-Name="FBB_DEFAULT_QOS",
+Huawei-Accounting-Level=0,
+Huawei-Up-Priority=15,
+Huawei-Down-Priority=15,
+Huawei-User-Mac="5a:8c:78:16:5f:24",
+Huawei-Acct-Update-Address=0,
+Huawei-NAT-Public-Address=123.231.98.84,
+Huawei-NAT-Start-Port=1280,
+Huawei-NAT-End-Port=1343,
+Huawei-Down-QOS-Profile-Name="FBB_DEFAULT_QOS",
+Access-Loop-Encapsulation=0x000000,
+Module-Failure-Message="ACCT FINAL Routing to MAC_AUTH: 5a8c.7816.5f24, Type: Start",
+Realm="mac_auth_realm"' \
+| radclient -x localhost acct mysecret
+----
+
+=== Expected Behavior
+
+[source, pseudocode]
+----
+AAA → NAS:
+ACCESS_REJECT {
+  Result = "Access-Reject"
+  Message = "Duplicate session detected"
+}
+----
+
+=== Database State
+
+[source,sql]
+----
+SELECT * FROM MACL2CDR ORDER BY CreatedDate DESC LIMIT 1;
+----
+
+---
+
+== Scenario 13: Accounting-Alive (interim) → Accounting-Response (OK)
+
+*Trigger*::
+`Acct-Status-Type = Interim-Update`
+
+*Process*::
+- Update usage counters (time, volume)
+- Sync DB state
+
+*Outcome*::
+Accounting-Response (OK)
+
+=== Request
+
+[source,pseudocode]
+----
+echo 'User-Name="5a8c.7816.5f24",
+NAS-Port=2138432,
+NAS-IP-Address=10.174.157.1,
+Framed-IP-Address=10.254.154.59,
+Filter-Id="ipoe_mac_auth",
+Class=0x4c4f4349443a393937333334363131,
+NAS-Identifier="MALA-B-HW-BNG-01",
+Acct-Status-Type=Interim-update,
+Acct-Delay-Time=0,
+Acct-Session-Id="MALA-B-00210300100320ef3f87AAAYfe",
+Acct-Authentic=RADIUS,
+Event-Timestamp="Dec  3 2025 17:55:16 +0530",
+NAS-Port-Type=Ethernet,
+Calling-Station-Id="5a:8c:78:16:5f:24",
+NAS-Port-Id="\001QWLAN:wlan1:320:DE_IWAG_MAC:R310:997339611_DETAC_Ruckus_MAIN_AP:34:FA:9F:08:72:40:",
+Service-Type=Framed-User,
+Framed-Protocol=PPP,
+Idle-Timeout=1800,
+Session-Timeout=3600,
+Huawei-IPHost-Addr="10.254.154.59 5a:8c:78:16:5f:24",
+Huawei-Priority=15,
+Huawei-Connect-ID=94208,
+Huawei-Domain-Name="mac_auth_test",
+Huawei-Qos-Profile-Name="FBB_DEFAULT_QOS",
+Huawei-Accounting-Level=0,
+Huawei-Up-Priority=15,
+Huawei-Down-Priority=15,
+Huawei-User-Mac="5a:8c:78:16:5f:24",
+Huawei-Acct-Update-Address=0,
+Huawei-NAT-Public-Address=123.231.98.84,
+Huawei-NAT-Start-Port=1280,
+Huawei-NAT-End-Port=1343,
+Huawei-Down-QOS-Profile-Name="FBB_DEFAULT_QOS",
+Access-Loop-Encapsulation=0x000000,
+Module-Failure-Message="ACCT FINAL Routing to MAC_AUTH: 5a8c.7816.5f24, Type: Start",
+Realm="mac_auth_realm"' \
+| radclient -x localhost acct mysecret
+----
+
+=== Expected Behavior
+
+[source, pseudocode]
+----
+AAA → NAS:
+ACCOUNTING_RESPONSE {
+  Result = "Accepted"
+  Message = "Interim updates handled"
+}
+----
+---
+
+== Scenario 14: Accounting-Stop → Accounting-Response (OK)
+
+*Trigger*::
+`Acct-Status-Type = Stop`
+
+*Process*::
+- Finalize session usage
+- Remove active session record
+- Write CDR entry
+
+*Outcome*::
+Accounting-Response (OK)
+
+=== Request
+
+[source,pseudocode]
+----
+echo 'User-Name="5a8c.7816.5f24",
+NAS-Port=2138432,
+NAS-IP-Address=10.174.157.1,
+Framed-IP-Address=10.254.154.59,
+NAS-Identifier="MALA-B-HW-BNG-01",
+Acct-Status-Type=Stop,
+Acct-Delay-Time=0,
+Acct-Input-Octets=2109554,
+Acct-Output-Octets=54601371,
+Acct-Session-Id="MALA-B-00210SSG00010042a9a6AAAYfe",
+Acct-Session-Time=329,
+Acct-Input-Packets=6795,
+Acct-Output-Packets=43788,
+Acct-Terminate-Cause=NAS-Request,
+Acct-Input-Gigawords=0,
+Acct-Output-Gigawords=0,
+Event-Timestamp="Dec  3 2025 18:00:45 +0530",
+NAS-Port-Type=Ethernet,
+Calling-Station-Id="5a:8c:78:16:5f:24",
+NAS-Port-Id="\001QWLAN:wlan1:320:DE_IWAG_MAC:R310:997339611_DETAC_Ruckus_MAIN_AP:34:FA:9F:08:72:40:",
+Acct-Multi-Session-Id="MALA-B-00210300100320ef3f87AAAYfe",
+Service-Type=Framed-User,
+Framed-Protocol=PPP,
+Huawei-Acct-IPv6-Input-Octets=0,
+Huawei-Acct-IPv6-Output-Octets=0,
+Huawei-Acct-IPv6-Input-Packets=0,
+Huawei-Acct-IPv6-Output-Packets=0,
+Huawei-Acct-IPv6-Input-Gigawords=0,
+Huawei-Acct-IPv6-Output-Gigawords=0,
+Huawei-Acct-Update-Address=0,
+Huawei-Service-Info="NPostpaid_12M_UD_VOL",
+Module-Failure-Message="ACCT FINAL Routing to MAC_AUTH: 5a8c.7816.5f24, Type: Stop",
+Realm="mac_auth_realm"' \
+| radclient -x localhost acct mysecret
+----
+
+=== Expected Response
+
+[source, pseudocode]
+----
+AAA → NAS:
+ACCOUNTING_RESPONSE {
+  Result = "Accepted"
+  Message = "Counters normalized"
+}
+----
+
+== Scenario 15: Unknown / invalid request → Reject
+
+*Trigger*::
+Malformed or unsupported attributes
+
+*Process*::
+- Fail validation checks
+
+*Outcome*::
+Access-Reject
+
+=== Request
+
+[source, pseudocode]
+----
+AAA Internal Logic:
+IF no ACCOUNTING_STOP received THEN
+  Auto-Terminate Session
+  Cleanup Resources
+END
+----
+
+=== Expected Response
+
+[source, pseudocode]
+----
+AAA Internal:
+AUTO_TERMINATION {
+  Action = "Force session cleanup"
+}
+----
