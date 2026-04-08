@@ -54,6 +54,7 @@
 
 *** xref:Dialog/gpon/architecture.adoc[System Architecture]
 *** xref:Dialog/gpon/core.adoc[Core Function Analysis]
+*** xref:Dialog/gpon/logs.adoc[Logs Management]
 *** xref:Dialog/gpon/security.adoc[Security Features]
 *** xref:Dialog/gpon/file.adoc[File & Variable Reference]
 *** Test Cases
