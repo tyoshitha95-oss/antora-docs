@@ -106,6 +106,7 @@
 ** xref:Dialog/LTE/overview5.adoc[LTE]
 *** xref:Dialog/LTE/architecture5.adoc[System Architecture]
 *** xref:Dialog/LTE/core5.adoc[Core Function Analysis]
+*** xref:Dialog/LTE/logs.adoc[Logs Management]
 *** xref:Dialog/LTE/security5.adoc[Security Features]
 *** xref:Dialog/LTE/file5.adoc[File & Variable Reference]
 *** Test Cases
