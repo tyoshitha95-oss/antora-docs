@@ -1,0 +1,60 @@
+= Logs Management
+
+== Overview
+
+The GPON logging system captures detailed authentication attempts and granular accounting data for broadband subscribers. This visibility is critical for troubleshooting connectivity issues and auditing network usage.
+
+== Log Types & Locations
+
+=== 1. Detail Logs (Authentication & Post-Auth)
+These logs capture the full RADIUS packet exchange for every Access-Request, Access-Accept, and Access-Reject associated with the GPON virtual server.
+
+*   **Path**: `${radacctdir}/%{Packet-Src-IP-Address}/gpon-auth-reply-%Y%m%d`
+*   **Format**: Detailed attribute-value pairs.
+*   **Security**: `User-Password` is automatically suppressed.
+
+[source, pseudocode]
+----
+TIMESTAMP: GPON-AUTH-REQUEST
+    User-Name = "subscriber@gpon"
+    Calling-Station-Id = "MAC_ADDRESS"
+    NAS-IP-Address = "NAS_IP"
+    Huawei-User-Mac = "MAC"
+    ...
+----
+
+=== 2. Accounting Line Logs
+Standardized, comma-separated entries for high-speed parsing of session data (Start, Interim, and Stop packets).
+
+*   **Path**: `${logdir}/radaccounting/gpon-%Y%m%d`
+*   **Format**: Comma-separated (CSV style).
+
+== Logged Attributes Reference
+
+The following attributes are captured in the **gpon_accounting** line log:
+
+[cols="1,3"]
+|===
+| Attribute | Description
+
+| `%T` | Human-readable timestamp of the log entry.
+| `User-Name` | The service identifier of the GPON subscriber.
+| `nodeid` | The internal ID of the AAA node processing the request.
+| `Acct-Status-Type` | Start, Stop, or Interim-Update.
+| `Acct-Session-Id` | Unique session identifier from the NAS.
+| `Framed-IP-Address` | The IPv4 address assigned to the subscriber.
+| `Framed-IPv6-Prefix` | The IPv6 prefix (if applicable).
+| `Acct-Input-Octets` | Total bytes received from the user.
+| `Acct-Output-Octets` | Total bytes sent to the user.
+| `Acct-Session-Time` | Total duration of the session in seconds.
+| `Calling-Station-Id` | Subscriber hardware identifier (MAC).
+| `NAS-Identifier` | Identifier of the originating BNG/NAS.
+|===
+
+== Syslog Integration
+
+The `full_packet_log` instance is also utilized to send real-time authentication snapshots to the system logger for centralized monitoring.
+
+*   **Facility**: `local0`
+*   **Level**: `debug`
+*   **Target**: Standard syslog endpoint (e.g., `/var/log/messages` or a central log server).
