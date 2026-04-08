@@ -1,0 +1,56 @@
+= Logs Management
+
+== Overview
+
+Enterprise logging provides visibility into corporate subscriber authentication, specifically differentiating between MSISDN-based (ENT1) and Username-based (ENT2) routing.
+
+== Log Types & Locations
+
+=== 1. Detail Logs
+Captures the complete authentication flow for Enterprise requests.
+
+*   **Path**: `${radacctdir}/%{Packet-Src-IP-Address}/ent-auth-reply-%Y%m%d`
+*   **Format**: Full detail log format.
+
+=== 2. Accounting Line Logs
+Comma-separated logs focused on Enterprise usage and session state.
+
+*   **Path**: `${logdir}/radaccounting/ent-%Y%m%d`
+*   **Format**: Comma-separated values for session auditing.
+
+== Logged Attributes Reference
+
+The Enterprise accounting log captures the following key parameters:
+
+[cols="1,3"]
+|===
+| Attribute | Description
+
+| `%T` | Log timestamp.
+| `User-Name` | MSISDN or Username of the Enterprise account.
+| `Acct-Status-Type` | Connection state (Start/Stop/Interim).
+| `Acct-Session-Id` | NAS-provided session key.
+| `Framed-IP-Address` | Assigned Enterprise IPv4 address.
+| `Calling-Station-Id` | Mobile identifier (MSISDN).
+| `Called-Station-Id` | The Enterprise APN or technical access point.
+| `NAS-Identifier` | Originating gateway ID.
+| `Acct-Input-Octets` | Usage (Upload).
+| `Acct-Output-Octets` | Usage (Download).
+|===
+
+== Packet Logging Logic
+
+Enterprise requests trigger the `full_packet_log` instance in both the **Authorize** and **Accounting** sections of the `ent_lte` virtual server.
+
+*   **Location**: `syslog (local0)`
+*   **Logic**: Logs the entire `Access-Request` and `Accounting-Request` contents, allowing for detailed protocol-level troubleshooting for corporate clients.
+
+[source, pseudocode]
+----
+LOG-TYPE: ENT-PACKET-SNAP
+    Request-Type = "Accounting"
+    Acct-Status-Type = "Start"
+    User-Name = "enterprise_user"
+    Group-ID = "ENT1"
+    ...
+----

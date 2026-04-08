@@ -71,6 +71,7 @@
 *** xref:Dialog/ENT/architecture3.adoc[System Architecture]
 *** xref:Dialog/ENT/core.adoc[Core Function Analysis]
 **** xref:Dialog/ENT/core3.adoc[Diagramatic Representation]
+*** xref:Dialog/ENT/logs.adoc[Logs Management]
 *** xref:Dialog/ENT/file.adoc[File & Variable Reference]
 *** Test Cases
 **** xref:Dialog/ENT/testcases/ent1.adoc[ENT1]
