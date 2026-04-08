@@ -1,0 +1,51 @@
+= Logs Management
+
+== Overview
+
+LTE logging is optimized for mobile network tracking, capturing extensive 3GPP-specific attributes that define the mobile station's environment, hardware, and location.
+
+== Log Types & Locations
+
+=== 1. Detail Logs
+Dedicated LTE detail logs for authentication transactions.
+
+*   **Path**: `${radacctdir}/%{Packet-Src-IP-Address}/lte-auth-reply-%Y%m%d`
+*   **Format**: Detail format with 3GPP attribute support.
+
+=== 2. Accounting Line Logs
+The most detailed of the line logs, including hardware and network identifiers.
+
+*   **Path**: `${logdir}/radaccounting/lte-%Y%m%d`
+
+== 3GPP & Mobile Attribute Reference
+
+The **lte_accounting** line log captures a wide array of mobile network parameters:
+
+[cols="1,3"]
+|===
+| Attribute | Description
+
+| `3GPP-IMSI` | International Mobile Subscriber Identity.
+| `3GPP-IMEISV` | International Mobile Equipment Identity Software Version.
+| `3GPP-RAT-Type` | Radio Access Technology (LTE, HSPA, etc.).
+| `3GPP-User-Location-Info` | Specific cell-site information (MCC, MNC, LAC, Cell-ID).
+| `3GPP-MS-Time-Zone` | Time zone offset of the mobile device.
+| `3GPP-Charging-ID` | Unique charging handle for the session.
+| `3GPP-SGSN-Address` | IP address of the serving gateway.
+| `3GPP-GGSN-Address` | IP address of the gateway support node.
+| `Acct-Input-Octets` | Session upload volume.
+| `Acct-Output-Octets` | Session download volume.
+|===
+
+== Syslog Dispatch
+
+LTE traffic can also be dispatched to the `lte_syslog` instance, which provides a filtered view of mobile authentications specifically for real-time monitoring and alerting systems.
+
+[source, pseudocode]
+----
+LOG-TYPE: LTE-SYSLOG-ENTRY
+    Packet-Type = "Access-Request"
+    IMSI = "41311XXXXXXXXXX"
+    RAT-Type = "LTE"
+    ...
+----
