@@ -2,7 +2,7 @@ name: Deploy Antora Site to GitHub Pages
 
 on:
   push:
-    branches: [master]  # your default branch is 'master'
+    branches: [master]
 
 permissions:
   contents: read
@@ -21,10 +21,14 @@ jobs:
           node-version: '20'
 
       - name: Install dependencies
-        run: npm ci   # uses your existing package-lock.json
+        run: npm ci
 
       - name: Build Antora site
         run: npx antora antora-playbook.yml
+
+      - name: Add root redirect
+        run: |
+          echo '<meta http-equiv="refresh" content="0; url=antora-docs/Dialog/DialogStart.html">' > build/site/index.html
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
