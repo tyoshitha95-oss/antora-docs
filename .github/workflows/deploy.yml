@@ -19,9 +19,8 @@ jobs:
         run: npm ci
       - name: Build Antora site
         run: npx antora antora-playbook.yml
-      - name: Add root redirect
-        run: |
-          echo '<meta http-equiv="refresh" content="0; url=Dialog/DialogStart.html">' > build/site/index.html
+      - name: Show build output structure
+        run: find build/site -name "DialogStart.html"
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
