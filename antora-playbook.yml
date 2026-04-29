@@ -2,7 +2,7 @@ site:
   title: Monyfi AAA
   url: https://tyoshitha95-oss.github.io/antora-docs
   start_page: project-name::Dialog/DialogStart.adoc
-content:
+ content:
   sources:
     - url: .
       branches:
