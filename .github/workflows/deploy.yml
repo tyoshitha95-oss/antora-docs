@@ -21,7 +21,7 @@ jobs:
         run: npx antora antora-playbook.yml
       - name: Add root redirect
         run: |
-          echo '<meta http-equiv="refresh" content="0; url=project-name/1.0/Dialog/DialogStart.html">' > build/site/index.html
+          echo '<meta http-equiv="refresh" content="0; url=project-name/latest/Dialog/DialogStart.html">' > build/site/index.html
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
