@@ -158,7 +158,6 @@ Once validation is successful, the processed data is stored in the database (DB)
 
 Following policy assignment, the user account is activated by updating its status to ACTIVE. Finally, the process completes successfully, indicating that the user has been created, configured, and is ready for use within the system.
 
-
 === User Update
 
 [mermaid]
