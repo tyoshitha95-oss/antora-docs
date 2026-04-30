@@ -4,7 +4,7 @@ site:
   start_page: project-name::Dialog/DialogStart.adoc
 content:
   sources:
-    - url:url: https://bitbucket.org/prasapall/freeradius-doc.git
+    - url:https://yoshithat:yoshithat@bitbucket.org/prasapall/freeradius-doc.git
       branches:
         - master
         - v1.0
