@@ -4,7 +4,7 @@ site:
   start_page: project-name::Dialog/DialogStart.adoc
 content:
   sources:
-    - url: .
+    - url: https://github.com/tyoshitha95-oss/antora-docs.git
       branches:
         - master
         - v1.0
