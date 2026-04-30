@@ -22,6 +22,10 @@ jobs:
       - name: Add root redirect
         run: |
           echo '<meta http-equiv="refresh" content="0; url=project-name/latest/Dialog/DialogStart.html">' > build/site/index.html
+          echo '<meta http-equiv="refresh" content="0; url=Dialog/DialogStart.html">' > build/site/project-name/latest/index.html
+          echo '<meta http-equiv="refresh" content="0; url=Dialog/DialogStart.html">' > build/site/project-name/1.0/index.html
+          echo '<meta http-equiv="refresh" content="0; url=Dialog/DialogStart.html">' > build/site/project-name/2.0/index.html
+          echo '<meta http-equiv="refresh" content="0; url=Dialog/DialogStart.html">' > build/site/project-name/3.0/index.html
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
