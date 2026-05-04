@@ -4,7 +4,7 @@ site:
   start_page: project-name::Dialog/DialogStart.adoc
 content:
   sources:
-    - url:https://yoshithat:yoshithat@bitbucket.org/prasapall/freeradius-doc.git
+    - url: https://github.com/tyoshitha95-oss/antora-docs.git
       branches:
         - master
         - v1.0
