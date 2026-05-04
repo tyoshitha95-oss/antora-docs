@@ -1,6 +1,6 @@
 = Accounting Handlers
 
-== Overview
+== Overview1
 Accounting hooks parse the finality of BNG records. While `authorize` is the gatekeeper and `post-auth` is the concurrent accountant, `accounting` handles session cleanup.
 
 == Standard Operations

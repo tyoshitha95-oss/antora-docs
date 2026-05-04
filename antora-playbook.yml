@@ -4,12 +4,13 @@ site:
   start_page: project-name::Dialog/DialogStart.adoc
 content:
   sources:
-    - url:https://yoshithat:yoshithat@bitbucket.org/prasapall/freeradius-doc.git
+    - url: https://github.com/tyoshitha95-oss/antora-docs.git
       branches:
         - master
         - v1.0
         - v2.0
         - v3.0
+        - v4.0
 ui:
   bundle:
     url: https://gitlab.com/antora/antora-ui-default/-/jobs/artifacts/HEAD/raw/build/ui-bundle.zip?job=bundle-stable

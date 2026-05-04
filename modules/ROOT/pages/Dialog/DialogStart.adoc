@@ -12,6 +12,7 @@ To begin:
 . ENT: Enterprise Networks
 . LTE: Long-Term Evolution
 . GuestNet
+. GuestNet2.
 
 ---
 
