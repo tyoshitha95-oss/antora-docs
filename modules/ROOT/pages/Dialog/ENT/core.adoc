@@ -1,4 +1,4 @@
-= Core Function Analysis - Loogic
+= Core Function Analysis - Logic
 
 == Main Entry Point (`sites-available/ent_lte`)
 
@@ -60,4 +60,3 @@ IF Group-ID == "ENT1":
     ELSE:
         REJECT "Framed-Address missing in both database and request"
 ----
-

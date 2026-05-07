@@ -81,8 +81,6 @@
 
 
 
-
-
 ** xref:Dialog/GuestNet/index4.adoc[GuestNet]
 
 *** xref:Dialog/GuestNet/overview4.adoc[Overview]
@@ -113,14 +111,11 @@
 **** xref:Dialog/LTE/testcases/std_auth.adoc[LTE Standard Authentication]
 
 
+
+** xref:Dialog/Captive Portal Solution/CptStart.adoc[Captive Portal Solution]
+
+
 ---
-
-* xref:Captive Portal Solution/CptStart.adoc[Captive Portal Solution]
-
-** xref:Captive Portal Solution/Overview.adoc[Overview]
-
-** System Architecture
-*** xref:Captive Portal Solution/testfile3.adoc[Test File 3]
 
 ---
 

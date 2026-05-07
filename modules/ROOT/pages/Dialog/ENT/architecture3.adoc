@@ -5,7 +5,7 @@
 The ENT Architecture shares its entry block with LTE to consolidate port listening:
 
 1. **Virtual Server Context (`ent_lte`)**:
-   The `ent_lte` server blocks port traffic and acts as a router. By reading the `Called-Station-Id` (which maps to the APN the client is connecting over), the system explicitly bypasses LTE logic to load `ent_auth_policy` and `ent_log`.
+   The `ent_lte` server blocks port traffic and acts as a route. By reading the `Called-Station-Id` (which maps to the APN the client is connecting over), the system explicitly bypasses LTE logic to load `ent_auth_policy` and `ent_log`.
 
 2. **Authentication Policy (`ent_auth_policy`)**:
    A heavily tailored logic script that normalizes input (removing spaces and invalid characters). It features an internal fork (ENT1 vs ENT2) depending on if the user authenticates with an ID card (domain-based username) or implicitly through their equipment (SIM MSISDN numbers).

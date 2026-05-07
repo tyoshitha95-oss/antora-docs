@@ -1,8 +1,0 @@
-= Captive Portal Solution
-:toc: left
-:toclevels: 2
-:sectnums:
-
-== Getting Started
-
-To begin:
